@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSAP Core — Complete Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.08);
+    --border-accent: rgba(120,80,255,0.4);
+    --text: #f0f0f8;
+    --muted: rgba(240,240,248,0.45);
+    --accent: #7850ff;
+    --accent2: #00e5c0;
+    --accent3: #ff5c8a;
+    --accent4: #ffb830;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 0; height: 52px;
+    overflow-x: auto;
+  }
+  nav a {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    text-decoration: none; padding: 0 14px; height: 52px;
+    display: flex; align-items: center; white-space: nowrap;
+    border-right: 1px solid var(--border);
+    transition: color 0.2s, background 0.2s;
+  }
+  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+  /* LAYOUT */
+  main { padding-top: 52px; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 4rem 2rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(120,80,255,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,80,255,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .hero-glow {
+    position: absolute; width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(120,80,255,0.15) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+  #hero .tag {
+    font-family: var(--mono); font-size: 11px; color: var(--accent2);
+    border: 1px solid rgba(0,229,192,0.3); padding: 4px 14px;
+    border-radius: 999px; margin-bottom: 2rem;
+    display: inline-block; opacity: 0;
+  }
+  #hero h1 {
+    font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem);
+    font-weight: 700; line-height: 1; letter-spacing: -2px;
+    margin-bottom: 1.5rem; opacity: 0;
+  }
+  #hero h1 span { color: var(--accent); }
+  #hero p {
+    font-size: 16px; color: var(--muted); max-width: 520px;
+    margin-bottom: 3rem; opacity: 0;
+  }
+  .hero-boxes {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    opacity: 0;
+  }
+  .hero-box {
+    width: 52px; height: 52px; border-radius: 10px;
+    background: var(--accent); opacity: 0.8;
+  }
+  .hero-box:nth-child(2) { background: var(--accent2); }
+  .hero-box:nth-child(3) { background: var(--accent3); }
+  .hero-box:nth-child(4) { background: var(--accent4); }
+  .hero-box:nth-child(5) { background: var(--accent); }
+
+  /* SECTIONS */
+  section {
+    padding: 5rem 2rem;
+    max-width: 900px; margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+  section:first-of-type { border-top: none; }
+
+  .section-label {
+    font-family: var(--mono); font-size: 10px; color: var(--accent);
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-family: var(--mono); font-size: 1.8rem; font-weight: 700;
+    margin-bottom: 0.75rem; letter-spacing: -1px;
+  }
+  .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+
+  /* DEMO CARDS */
+  .demo-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .demo-card:hover { border-color: var(--border-accent); }
+  .demo-card h3 {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--accent2); margin-bottom: 0.5rem;
+  }
+  .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+
+  /* STAGE */
+  .stage {
+    background: var(--surface2); border-radius: 12px;
+    padding: 2rem; min-height: 100px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 1rem;
+    position: relative; overflow: hidden;
+  }
+
+  /* BOX */
+  .box {
+    width: 60px; height: 60px; border-radius: 10px;
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; font-family: var(--mono); font-size: 10px;
+    color: white; font-weight: 700; flex-shrink: 0;
+  }
+  .box.teal { background: var(--accent2); color: #0a0a0f; }
+  .box.pink { background: var(--accent3); }
+  .box.amber { background: var(--accent4); color: #0a0a0f; }
+  .box.sm { width: 40px; height: 40px; font-size: 9px; }
+
+  /* CONTROLS */
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--mono); font-size: 11px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--text); background: rgba(120,80,255,0.1); }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* SLIDERS */
+  .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .slider-row label { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 90px; flex-shrink: 0; }
+  .slider-row input[type=range] {
+    flex: 1; accent-color: var(--accent); height: 2px; cursor: pointer;
+  }
+  .slider-val { font-family: var(--mono); font-size: 11px; color: var(--accent2); width: 36px; text-align: right; }
+
+  /* CODE */
+  .code-snippet {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; color: var(--muted);
+    white-space: pre-wrap; word-break: break-all;
+    margin-top: 1rem;
+  }
+  .code-snippet .k { color: var(--accent); }
+  .code-snippet .s { color: var(--accent2); }
+  .code-snippet .n { color: var(--accent4); }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap {
+    height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+    margin-top: 1rem;
+  }
+  .progress-bar-fill {
+    height: 100%; width: 0%; background: var(--accent2); border-radius: 2px;
+    transition: width 0.05s linear;
+  }
+
+  /* STATUS */
+  .status-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent2); margin-right: 6px;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .status { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  /* STAGGER GRID */
+  .stagger-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sg-item {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: var(--accent); opacity: 0; transform: scale(0.5);
+  }
+
+  /* UTILITY DISPLAY */
+  .util-output {
+    font-family: var(--mono); font-size: 13px; color: var(--accent2);
+    background: rgba(0,229,192,0.05); border: 1px solid rgba(0,229,192,0.15);
+    padding: 8px 14px; border-radius: 8px; min-width: 80px; text-align: center;
+  }
+
+  /* TIMELINE VIZ */
+  .tl-viz {
+    height: 8px; border-radius: 4px; background: var(--surface2);
+    position: relative; overflow: hidden; margin-top: 1rem;
+  }
+  .tl-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%; border-radius: 4px;
+  }
+
+  /* TICKER */
+  .ticker-val {
+    font-family: var(--mono); font-size: 2rem; font-weight: 700;
+    color: var(--accent); text-align: center;
+  }
+
+  /* CONTEXT DEMO */
+  .context-boxes { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* MATCH MEDIA INDICATOR */
+  .mm-badge {
+    font-family: var(--mono); font-size: 12px;
+    padding: 4px 12px; border-radius: 6px; display: inline-block;
+    margin-top: 0.5rem;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#tweens">gsap.to/from</a>
+  <a href="#fromto">fromTo / set</a>
+  <a href="#timeline">Timeline</a>
+  <a href="#playback">Playback</a>
+  <a href="#stagger">Stagger</a>
+  <a href="#utils">Utilities</a>
+  <a href="#config">Config</a>
+  <a href="#context">Context</a>
+</nav>
+
+<main>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="tag" id="hero-tag">GSAP 3.15 · Core API · Complete Demo</div>
+  <h1 id="hero-title">GSAP<br /><span>Core</span></h1>
+  <p id="hero-desc">Every command in the GSAP core library — live, interactive, and annotated. Click buttons to trigger animations.</p>
+  <div class="hero-boxes" id="hero-boxes">
+    <div class="hero-box"></div>
+    <div class="hero-box"></div>
+    <div class="hero-box"></div>
+    <div class="hero-box"></div>
+    <div class="hero-box"></div>
+  </div>
+</div>
+
+<!-- ─────────────── TWEENS ─────────────── -->
+<section id="tweens">
+  <div class="section-label">01 — Tweens</div>
+  <h2>gsap.to()</h2>
+  <p class="section-desc">Animates from the current state TO the values you define. The most-used tween method.</p>
+
+  <div class="demo-card">
+    <h3>gsap.to() — animate to values</h3>
+    <p>Box moves to x:200 with a bounce ease.</p>
+    <div class="stage">
+      <div class="box" id="to-box">to()</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runTo()">run gsap.to()</button>
+      <button class="btn" onclick="gsap.set('#to-box',{x:0})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#to-box"</span>, { x: <span class="n">200</span>, duration: <span class="n">1</span>, ease: <span class="s">"bounce.out"</span> });</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.from() — animate from values</h3>
+    <p>Box enters FROM below and invisible — great for entrance animations.</p>
+    <div class="stage">
+      <div class="box pink" id="from-box">from()</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runFrom()">run gsap.from()</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.from(<span class="s">"#from-box"</span>, { y: <span class="n">60</span>, opacity: <span class="n">0</span>, duration: <span class="n">0.8</span>, ease: <span class="s">"back.out(1.7)"</span> });</div>
+  </div>
+</section>
+
+<!-- ─────────────── FROMTO / SET ─────────────── -->
+<section id="fromto">
+  <div class="section-label">02 — fromTo & set</div>
+  <h2>gsap.fromTo() & gsap.set()</h2>
+  <p class="section-desc">Full control over start and end states, or instant property assignment.</p>
+
+  <div class="demo-card">
+    <h3>gsap.fromTo() — explicit start & end</h3>
+    <p>Defines BOTH the starting and ending values precisely.</p>
+    <div class="stage">
+      <div class="box teal" id="fromto-box">fromTo</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runFromTo()">run gsap.fromTo()</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.fromTo(<span class="s">"#fromto-box"</span>,
+  { x: <span class="n">-150</span>, rotation: <span class="n">-90</span>, opacity: <span class="n">0</span> },
+  { x: <span class="n">150</span>, rotation: <span class="n">90</span>, opacity: <span class="n">1</span>, duration: <span class="n">1.2</span>, ease: <span class="s">"power3.inOut"</span> }
+);</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.set() — instant property assignment</h3>
+    <p>No animation — sets values immediately. A zero-duration tween.</p>
+    <div class="stage">
+      <div class="box amber" id="set-box" style="opacity:0.2; border-radius:50%">set()</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runSet()">run gsap.set()</button>
+      <button class="btn" onclick="gsap.set('#set-box',{opacity:0.2,borderRadius:'50%',scale:1,rotation:0})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.set(<span class="s">"#set-box"</span>, { opacity: <span class="n">1</span>, borderRadius: <span class="s">"10px"</span>, scale: <span class="n">1.3</span>, rotation: <span class="n">45</span> });</div>
+  </div>
+</section>
+
+<!-- ─────────────── TIMELINE ─────────────── -->
+<section id="timeline">
+  <div class="section-label">03 — Timeline</div>
+  <h2>gsap.timeline()</h2>
+  <p class="section-desc">Chain tweens with precise timing. Control the whole sequence as one unit. Add labels, callbacks, and nested timelines.</p>
+
+  <div class="demo-card">
+    <h3>gsap.timeline() with position parameter</h3>
+    <p>Four boxes animate in sequence with overlaps. The timeline progress bar shows playback.</p>
+    <div class="stage">
+      <div class="box" id="tl-a" style="opacity:0">A</div>
+      <div class="box pink" id="tl-b" style="opacity:0">B</div>
+      <div class="box teal" id="tl-c" style="opacity:0">C</div>
+      <div class="box amber" id="tl-d" style="opacity:0">D</div>
+    </div>
+    <div class="tl-viz"><div class="tl-fill" id="tl-fill"></div></div>
+    <div style="margin-top:1rem;margin-bottom:1rem;">
+      <span class="status"><span class="status-dot" id="tl-dot"></span><span id="tl-status">idle</span></span>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runTimeline()">play timeline</button>
+      <button class="btn" onclick="mainTl && mainTl.restart()">restart</button>
+      <button class="btn" onclick="mainTl && mainTl.seek('mid')">seek "mid"</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> tl = <span class="k">gsap</span>.timeline({ onUpdate: updateBar });
+tl.to(<span class="s">"#tl-a"</span>, { opacity:<span class="n">1</span>, y:<span class="n">0</span>, duration:<span class="n">0.6</span> })
+  .addLabel(<span class="s">"mid"</span>)
+  .to(<span class="s">"#tl-b"</span>, { opacity:<span class="n">1</span>, y:<span class="n">0</span>, duration:<span class="n">0.6</span> }, <span class="s">"-=0.3"</span>)
+  .to(<span class="s">"#tl-c"</span>, { opacity:<span class="n">1</span>, y:<span class="n">0</span>, duration:<span class="n">0.6</span> }, <span class="s">"-=0.3"</span>)
+  .to(<span class="s">"#tl-d"</span>, { opacity:<span class="n">1</span>, y:<span class="n">0</span>, duration:<span class="n">0.6</span> }, <span class="s">"-=0.3"</span>)
+  .call(() => log(<span class="s">"done!"</span>));</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>tl.add() and tl.addLabel()</h3>
+    <p>Insert tweens or labels at specific times. Seek to labels by name.</p>
+    <div class="stage">
+      <div class="box" id="add-box" style="opacity:0">add()</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runAddLabel()">play</button>
+      <button class="btn" onclick="addTl && addTl.seek('step2')">seek "step2"</button>
+    </div>
+    <div class="code-snippet">tl.addLabel(<span class="s">"step1"</span>, <span class="n">0</span>).addLabel(<span class="s">"step2"</span>, <span class="n">1</span>);
+tl.to(<span class="s">"#add-box"</span>, { opacity:<span class="n">1</span>, x:<span class="n">100</span> }, <span class="s">"step1"</span>);
+tl.to(<span class="s">"#add-box"</span>, { rotation:<span class="n">360</span>, scale:<span class="n">1.5</span> }, <span class="s">"step2"</span>);</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>tl.call() — callback at timeline position</h3>
+    <p>A callback fires at exactly 1 second into the timeline.</p>
+    <div class="stage">
+      <div class="box teal" id="call-box">call()</div>
+      <div id="call-log" style="font-family:var(--mono);font-size:12px;color:var(--accent2);min-width:140px;"></div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runCall()">play</button>
+    </div>
+    <div class="code-snippet">tl.to(<span class="s">"#call-box"</span>, { x:<span class="n">100</span>, duration:<span class="n">2</span> })
+  .call(() => el.textContent = <span class="s">"✓ callback fired!"</span>, null, <span class="n">1</span>);</div>
+  </div>
+</section>
+
+<!-- ─────────────── PLAYBACK ─────────────── -->
+<section id="playback">
+  <div class="section-label">04 — Playback Control</div>
+  <h2>play / pause / seek / reverse / restart</h2>
+  <p class="section-desc">Every animation is controllable. Pause, reverse, scrub the playhead, adjust speed.</p>
+
+  <div class="demo-card">
+    <h3>play() / pause() / resume() / reverse() / restart()</h3>
+    <p>Full transport controls on a single looping tween.</p>
+    <div class="stage">
+      <div class="box" id="pb-box">ctrl</div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="pb-bar"></div>
+    </div>
+    <div style="margin:10px 0;"><span class="status"><span class="status-dot" id="pb-dot"></span><span id="pb-status">ready</span></span></div>
+    <div class="controls">
+      <button class="btn primary" onclick="pbTween.play()">play()</button>
+      <button class="btn" onclick="pbTween.pause()">pause()</button>
+      <button class="btn" onclick="pbTween.resume()">resume()</button>
+      <button class="btn" onclick="pbTween.reverse()">reverse()</button>
+      <button class="btn" onclick="pbTween.restart()">restart()</button>
+    </div>
+    <div class="code-snippet">tween.play(); tween.pause(); tween.resume();
+tween.reverse(); tween.restart();</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>seek() — jump to any time</h3>
+    <p>Drag to scrub through the animation timeline.</p>
+    <div class="stage">
+      <div class="box pink" id="seek-box">seek</div>
+    </div>
+    <div class="slider-row" style="margin-top:1rem;">
+      <label>seek time</label>
+      <input type="range" min="0" max="100" value="0" oninput="doSeek(this.value)" />
+      <span class="slider-val" id="seek-val">0.0s</span>
+    </div>
+    <div class="code-snippet">tween.pause();
+tween.seek(<span class="n">1.5</span>); <span style="color:var(--muted)">// jump to 1.5 seconds</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>timeScale() — control speed</h3>
+    <p>1 = normal, 2 = double, 0.5 = slow-mo, -1 = reverse.</p>
+    <div class="stage">
+      <div class="box amber" id="ts-box">speed</div>
+    </div>
+    <div class="slider-row" style="margin-top:1rem;">
+      <label>timeScale</label>
+      <input type="range" min="-20" max="20" value="10" oninput="doTimeScale(this.value)" />
+      <span class="slider-val" id="ts-val">1.0×</span>
+    </div>
+    <div class="controls" style="margin-top:8px;">
+      <button class="btn primary" onclick="tsTween.play()">play</button>
+      <button class="btn" onclick="tsTween.pause()">pause</button>
+    </div>
+    <div class="code-snippet">tween.timeScale(<span class="n">2</span>);   <span style="color:var(--muted)">// 2× speed</span>
+tween.timeScale(<span class="n">0.5</span>); <span style="color:var(--muted)">// slow motion</span>
+tween.timeScale(<span class="n">-1</span>);  <span style="color:var(--muted)">// reverse</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>progress() — get or set progress</h3>
+    <p>0 = start, 0.5 = midpoint, 1 = end. Drag to scrub by progress fraction.</p>
+    <div class="stage">
+      <div class="box teal" id="prog-box">prog</div>
+    </div>
+    <div class="slider-row" style="margin-top:1rem;">
+      <label>progress</label>
+      <input type="range" min="0" max="100" value="0" oninput="doProgress(this.value)" />
+      <span class="slider-val" id="prog-val">0.00</span>
+    </div>
+    <div class="code-snippet">tween.progress(<span class="n">0.5</span>); <span style="color:var(--muted)">// jump to 50%</span>
+<span class="k">console</span>.log(tween.progress()); <span style="color:var(--muted)">// get current</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>kill() & killTweensOf()</h3>
+    <p>Destroy a tween mid-animation and free its memory. Click "run" then "kill".</p>
+    <div class="stage">
+      <div class="box" id="kill-box" style="opacity:0.3">kill()</div>
+    </div>
+    <div style="margin-top:0.5rem;"><span class="status"><span class="status-dot" id="kill-dot" style="background:var(--muted)"></span><span id="kill-status">idle</span></span></div>
+    <div class="controls" style="margin-top:1rem;">
+      <button class="btn primary" onclick="runKill()">run tween</button>
+      <button class="btn" onclick="doKill()">kill()</button>
+      <button class="btn" onclick="gsap.set('#kill-box',{x:0,opacity:0.3}); document.getElementById('kill-status').textContent='idle'; document.getElementById('kill-dot').style.background='var(--muted)'">reset</button>
+    </div>
+    <div class="code-snippet">killTween = <span class="k">gsap</span>.to(<span class="s">"#kill-box"</span>, { x:<span class="n">200</span>, duration:<span class="n">4</span> });
+killTween.kill(); <span style="color:var(--muted)">// stops & frees memory</span>
+<span class="k">gsap</span>.killTweensOf(<span class="s">"#kill-box"</span>); <span style="color:var(--muted)">// kill all on target</span></div>
+  </div>
+</section>
+
+<!-- ─────────────── STAGGER ─────────────── -->
+<section id="stagger">
+  <div class="section-label">05 — Stagger</div>
+  <h2>stagger</h2>
+  <p class="section-desc">Animate multiple targets with incremental delays. Supports from-center, grid, ease, and amount configs.</p>
+
+  <div class="demo-card">
+    <h3>stagger — number</h3>
+    <p>Simple stagger: each element starts 0.08s after the previous.</p>
+    <div class="stage">
+      <div class="stagger-grid" id="sg1">
+        <div class="sg-item"></div><div class="sg-item"></div><div class="sg-item"></div>
+        <div class="sg-item"></div><div class="sg-item"></div><div class="sg-item"></div>
+        <div class="sg-item"></div><div class="sg-item"></div><div class="sg-item"></div>
+        <div class="sg-item"></div><div class="sg-item"></div><div class="sg-item"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runStagger1()">run stagger</button>
+      <button class="btn" onclick="gsap.set('#sg1 .sg-item',{opacity:0,scale:0.5})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">".sg-item"</span>, { opacity:<span class="n">1</span>, scale:<span class="n">1</span>, duration:<span class="n">0.5</span>, stagger:<span class="n">0.08</span>, ease:<span class="s">"back.out"</span> });</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>stagger — from: "center"</h3>
+    <p>Animation radiates outward from the center element.</p>
+    <div class="stage">
+      <div class="stagger-grid" id="sg2">
+        <div class="sg-item" style="background:var(--accent3)"></div><div class="sg-item" style="background:var(--accent3)"></div><div class="sg-item" style="background:var(--accent3)"></div>
+        <div class="sg-item" style="background:var(--accent3)"></div><div class="sg-item" style="background:var(--accent3)"></div><div class="sg-item" style="background:var(--accent3)"></div>
+        <div class="sg-item" style="background:var(--accent3)"></div><div class="sg-item" style="background:var(--accent3)"></div><div class="sg-item" style="background:var(--accent3)"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runStagger2()">run from center</button>
+      <button class="btn" onclick="gsap.set('#sg2 .sg-item',{opacity:0,scale:0.5})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">".sg-item"</span>, {
+  opacity:<span class="n">1</span>, scale:<span class="n">1</span>, duration:<span class="n">0.6</span>,
+  stagger: { each:<span class="n">0.08</span>, from:<span class="s">"center"</span>, ease:<span class="s">"power2.inOut"</span> }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── UTILITIES ─────────────── -->
+<section id="utils">
+  <div class="section-label">06 — Utilities</div>
+  <h2>gsap.utils.*</h2>
+  <p class="section-desc">Powerful helper functions for value manipulation — clamp, map, interpolate, snap, wrap, random, pipe.</p>
+
+  <div class="demo-card">
+    <h3>gsap.utils.clamp(min, max)</h3>
+    <p>Clamps input to the range 0–100.</p>
+    <div class="stage" style="gap:2rem;">
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px;">input</div>
+        <input type="range" min="-50" max="150" value="50" oninput="doClamp(this.value)" style="width:120px;accent-color:var(--accent)" />
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px;" id="clamp-in">50</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:1.5rem;color:var(--border-accent)">→</div>
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px;">clamped output</div>
+        <div class="util-output" id="clamp-out">50</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> clamp = <span class="k">gsap</span>.utils.clamp(<span class="n">0</span>, <span class="n">100</span>);
+clamp(<span class="n">150</span>); <span style="color:var(--muted)">// → 100</span>
+clamp(<span class="n">-10</span>);  <span style="color:var(--muted)">// → 0</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.mapRange()</h3>
+    <p>Maps a value from one range (0–500) to another (0–1).</p>
+    <div class="stage" style="gap:2rem;">
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px;">input (0–500)</div>
+        <input type="range" min="0" max="500" value="250" oninput="doMap(this.value)" style="width:120px;accent-color:var(--accent2)" />
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px;" id="map-in">250</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:1.5rem;color:var(--border-accent)">→</div>
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px;">mapped (0–1)</div>
+        <div class="util-output" id="map-out">0.50</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> map = <span class="k">gsap</span>.utils.mapRange(<span class="n">0</span>, <span class="n">500</span>, <span class="n">0</span>, <span class="n">1</span>);
+map(<span class="n">250</span>); <span style="color:var(--muted)">// → 0.5</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.interpolate()</h3>
+    <p>Interpolates between two colors at a 0–1 progress.</p>
+    <div class="stage" style="gap:2rem; flex-direction:column;">
+      <input type="range" min="0" max="100" value="0" oninput="doInterp(this.value)" style="width:100%;accent-color:var(--accent3)" />
+      <div id="interp-swatch" style="width:100%;height:48px;border-radius:10px;background:#7850ff;transition:background 0.1s;"></div>
+      <div class="util-output" id="interp-val" style="min-width:120px;">progress: 0.00</div>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.utils.interpolate(<span class="s">"#7850ff"</span>, <span class="s">"#00e5c0"</span>, <span class="n">0.5</span>);</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.snap()</h3>
+    <p>Snaps input to nearest multiple of 25.</p>
+    <div class="stage" style="gap:2rem;">
+      <div>
+        <input type="range" min="0" max="100" value="50" oninput="doSnap(this.value)" style="width:140px;accent-color:var(--accent4)" />
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px;" id="snap-in">50</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:1.5rem;color:var(--border-accent)">→</div>
+      <div class="util-output" id="snap-out">50</div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> snap = <span class="k">gsap</span>.utils.snap(<span class="n">25</span>);
+snap(<span class="n">37</span>); <span style="color:var(--muted)">// → 25</span>
+snap(<span class="n">63</span>); <span style="color:var(--muted)">// → 75</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.wrap()</h3>
+    <p>Wraps a value within a range — like a circular array index.</p>
+    <div class="stage" style="gap:2rem;">
+      <button class="btn primary" onclick="wrapCount=(wrapCount||0)+1; document.getElementById('wrap-out').textContent=gsap.utils.wrap(0,5)(wrapCount); document.getElementById('wrap-in').textContent=wrapCount;">increment →</button>
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px;">raw value</div>
+        <div class="util-output" id="wrap-in">0</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px;">wrapped (0–4)</div>
+        <div class="util-output" id="wrap-out">0</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> wrap = <span class="k">gsap</span>.utils.wrap(<span class="n">0</span>, <span class="n">5</span>);
+wrap(<span class="n">6</span>); <span style="color:var(--muted)">// → 1</span>
+wrap(<span class="n">-1</span>); <span style="color:var(--muted)">// → 4</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.normalize()</h3>
+    <p>Converts a value within a range to its 0–1 normalized equivalent.</p>
+    <div class="stage" style="gap:2rem;">
+      <div>
+        <input type="range" min="0" max="200" value="100" oninput="doNorm(this.value)" style="width:140px;accent-color:var(--accent)" />
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px;" id="norm-in">100</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:1.5rem;color:var(--border-accent)">→</div>
+      <div class="util-output" id="norm-out">0.50</div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> norm = <span class="k">gsap</span>.utils.normalize(<span class="n">0</span>, <span class="n">200</span>);
+norm(<span class="n">100</span>); <span style="color:var(--muted)">// → 0.5</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.random()</h3>
+    <p>Random number in a range, optionally snapped to an increment.</p>
+    <div class="stage">
+      <div id="rand-display" style="font-family:var(--mono);font-size:2.5rem;font-weight:700;color:var(--accent)">—</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="doRandom()">random(0, 100, 5)</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.utils.random(<span class="n">0</span>, <span class="n">100</span>, <span class="n">5</span>); <span style="color:var(--muted)">// snapped to nearest 5</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.utils.pipe()</h3>
+    <p>Compose multiple utils into a pipeline. Input → clamp → map → snap → output.</p>
+    <div class="stage" style="gap:1.5rem;flex-direction:column;">
+      <input type="range" min="-50" max="200" value="100" oninput="doPipe(this.value)" style="width:100%;accent-color:var(--accent2)" />
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">raw</div><div class="util-output" id="pipe-raw">100</div></div>
+        <div style="font-family:var(--mono);color:var(--border-accent)">→ clamp(0,100) →</div>
+        <div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">clamped</div><div class="util-output" id="pipe-clamped">100</div></div>
+        <div style="font-family:var(--mono);color:var(--border-accent)">→ map →</div>
+        <div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">mapped</div><div class="util-output" id="pipe-mapped">1.00</div></div>
+        <div style="font-family:var(--mono);color:var(--border-accent)">→ snap →</div>
+        <div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">output</div><div class="util-output" id="pipe-out">1.0</div></div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> transform = <span class="k">gsap</span>.utils.pipe(
+  <span class="k">gsap</span>.utils.clamp(<span class="n">0</span>, <span class="n">100</span>),
+  <span class="k">gsap</span>.utils.mapRange(<span class="n">0</span>, <span class="n">100</span>, <span class="n">0</span>, <span class="n">1</span>),
+  <span class="k">gsap</span>.utils.snap(<span class="n">0.1</span>)
+);</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.getProperty()</h3>
+    <p>Read the current animated value of any property from an element.</p>
+    <div class="stage" style="gap:2rem;">
+      <div class="box" id="gp-box">drag me</div>
+      <div style="text-align:left;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:6px;">current x value:</div>
+        <div class="util-output" id="gp-out">0px</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runGetProp()">animate + read</button>
+      <button class="btn" onclick="gsap.set('#gp-box',{x:0})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.getProperty(<span class="s">"#gp-box"</span>, <span class="s">"x"</span>); <span style="color:var(--muted)">// → current x</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.isTweening() & gsap.getTweensOf()</h3>
+    <p>Inspect whether a target is actively animating, and get all its tweens.</p>
+    <div class="stage" style="gap:2rem;flex-direction:column;">
+      <div class="box teal" id="inspect-box">inspect</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">isTweening</div><div class="util-output" id="is-tweening-out">false</div></div>
+        <div><div style="font-family:var(--mono);font-size:11px;color:var(--muted)">tweens count</div><div class="util-output" id="tweens-count-out">0</div></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runInspect()">animate</button>
+      <button class="btn" onclick="checkInspect()">check</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.isTweening(<span class="s">"#box"</span>);       <span style="color:var(--muted)">// true/false</span>
+<span class="k">gsap</span>.getTweensOf(<span class="s">"#box"</span>).length; <span style="color:var(--muted)">// count</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.delayedCall()</h3>
+    <p>GSAP-aware setTimeout — respects timeScale, can be paused or killed.</p>
+    <div class="stage">
+      <div id="dc-log" style="font-family:var(--mono);font-size:13px;color:var(--accent2);text-align:center;">press run...</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runDelayedCall()">run (fires in 2s)</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.delayedCall(<span class="n">2</span>, () => {
+  console.log(<span class="s">"fired after 2s!"</span>);
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── CONFIG ─────────────── -->
+<section id="config">
+  <div class="section-label">07 — Config & Global</div>
+  <h2>registerPlugin / defaults / config / ticker</h2>
+  <p class="section-desc">Global GSAP settings, plugin registration, the animation ticker, and master timeline control.</p>
+
+  <div class="demo-card">
+    <h3>gsap.defaults()</h3>
+    <p>Sets a global default ease and duration. All tweens below inherit them unless overridden.</p>
+    <div class="stage">
+      <div class="box" id="def-box">default</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runDefaults()">apply defaults + run</button>
+      <button class="btn" onclick="gsap.defaults({}); gsap.set('#def-box',{x:0})">clear defaults</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.defaults({ ease: <span class="s">"elastic.out(1,0.3)"</span>, duration: <span class="n">1.5</span> });
+<span class="k">gsap</span>.to(<span class="s">"#def-box"</span>, { x: <span class="n">200</span> }); <span style="color:var(--muted)">// uses defaults</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.registerEase()</h3>
+    <p>Register a custom easing function by name and use it like any built-in ease.</p>
+    <div class="stage">
+      <div class="box pink" id="ease-box">custom</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runCustomEase()">run custom ease</button>
+      <button class="btn" onclick="gsap.set('#ease-box',{x:0})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.registerEase(<span class="s">"staircase"</span>, p => Math.floor(p * <span class="n">5</span>) / <span class="n">5</span>);
+<span class="k">gsap</span>.to(<span class="s">"#ease-box"</span>, { x: <span class="n">200</span>, ease: <span class="s">"staircase"</span>, duration: <span class="n">1.5</span> });</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.ticker</h3>
+    <p>Add a function to GSAP's rAF loop. The counter below increments every frame.</p>
+    <div class="stage" style="flex-direction:column;gap:0.5rem;">
+      <div class="ticker-val" id="ticker-val">0</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">frames elapsed</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="ticker-btn" onclick="toggleTicker()">start ticker</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.ticker.add((time, delta) => {
+  frameCount++;
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.globalTimeline</h3>
+    <p>Control every single animation at once — pause everything or slow the whole world.</p>
+    <div class="stage" style="flex-wrap:wrap;gap:12px;">
+      <div class="box" id="g1" style="animation:none;"></div>
+      <div class="box teal" id="g2"></div>
+      <div class="box pink" id="g3"></div>
+    </div>
+    <div class="slider-row" style="margin-top:1rem;">
+      <label>global speed</label>
+      <input type="range" min="0" max="30" value="10" oninput="doGlobalSpeed(this.value)" />
+      <span class="slider-val" id="global-speed-val">1.0×</span>
+    </div>
+    <div class="controls" style="margin-top:8px;">
+      <button class="btn primary" onclick="startGlobal()">run all</button>
+      <button class="btn" onclick="gsap.globalTimeline.pause()">pause all</button>
+      <button class="btn" onclick="gsap.globalTimeline.resume()">resume all</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.globalTimeline.pause();
+<span class="k">gsap</span>.globalTimeline.resume();
+<span class="k">gsap</span>.globalTimeline.timeScale(<span class="n">0.5</span>);</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.registerPlugin()</h3>
+    <p>Required when using plugins with bundlers to prevent tree-shaking. Run before any plugin tween.</p>
+    <div class="code-snippet"><span class="k">import</span> { ScrollTrigger, Flip, TextPlugin } <span class="k">from</span> <span class="s">"gsap/all"</span>;
+<span class="k">gsap</span>.registerPlugin(ScrollTrigger, Flip, TextPlugin);
+<span style="color:var(--muted)">// Now you can use these plugins safely in your build</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.config()</h3>
+    <p>Global GSAP configuration — suppress warnings, set default units, control autoSleep.</p>
+    <div class="code-snippet"><span class="k">gsap</span>.config({
+  nullTargetWarn: <span class="n">false</span>,   <span style="color:var(--muted)">// suppress missing target warnings</span>
+  units: { x: <span class="s">"vw"</span>, y: <span class="s">"vh"</span> }, <span style="color:var(--muted)">// default units per property</span>
+  autoSleep: <span class="n">60</span>            <span style="color:var(--muted)">// pause ticker after 60s idle</span>
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.exportRoot()</h3>
+    <p>Exports all current tweens into a new timeline — new tweens won't be affected.</p>
+    <div class="stage">
+      <div class="box amber" id="er-box">export</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runExportRoot()">run + export + slow</button>
+      <button class="btn" onclick="gsap.set('#er-box',{x:0}); gsap.globalTimeline.timeScale(1)">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#er-box"</span>, { x: <span class="n">200</span>, duration: <span class="n">3</span> });
+<span class="k">const</span> master = <span class="k">gsap</span>.exportRoot();
+master.timeScale(<span class="n">0.2</span>); <span style="color:var(--muted)">// slows only existing tweens</span></div>
+  </div>
+</section>
+
+<!-- ─────────────── CONTEXT ─────────────── -->
+<section id="context">
+  <div class="section-label">08 — Context & matchMedia</div>
+  <h2>gsap.context() & gsap.matchMedia()</h2>
+  <p class="section-desc">Scope animations for cleanup (React/Vue) and adapt to media queries responsively.</p>
+
+  <div class="demo-card">
+    <h3>gsap.context() — scoped cleanup</h3>
+    <p>Groups all animations inside it. Call ctx.revert() to undo them all — essential in React useEffect cleanup.</p>
+    <div class="stage">
+      <div class="context-boxes">
+        <div class="box" id="ctx-a" style="opacity:0">ctx-A</div>
+        <div class="box teal" id="ctx-b" style="opacity:0">ctx-B</div>
+        <div class="box pink" id="ctx-c" style="opacity:0">ctx-C</div>
+      </div>
+    </div>
+    <div style="margin-top:0.75rem;"><span class="status"><span class="status-dot" id="ctx-dot" style="background:var(--muted)"></span><span id="ctx-status">idle — not mounted</span></span></div>
+    <div class="controls" style="margin-top:1rem;">
+      <button class="btn primary" onclick="mountCtx()">mount (run context)</button>
+      <button class="btn" onclick="unmountCtx()">unmount (ctx.revert())</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> ctx = <span class="k">gsap</span>.context(() => {
+  <span class="k">gsap</span>.to(<span class="s">"#ctx-a"</span>, { opacity:<span class="n">1</span>, x:<span class="n">60</span> });
+  <span class="k">gsap</span>.to(<span class="s">"#ctx-b"</span>, { opacity:<span class="n">1</span>, x:<span class="n">60</span>, delay:<span class="n">0.2</span> });
+  <span class="k">gsap</span>.to(<span class="s">"#ctx-c"</span>, { opacity:<span class="n">1</span>, x:<span class="n">60</span>, delay:<span class="n">0.4</span> });
+});
+<span style="color:var(--muted)">// In React: return () => ctx.revert();</span>
+ctx.revert(); <span style="color:var(--muted)">// reverts ALL animations inside context</span></div>
+  </div>
+
+  <div class="demo-card">
+    <h3>gsap.matchMedia() — responsive animations</h3>
+    <p>Different animations run based on the current viewport width. Resize your window to see the active breakpoint change.</p>
+    <div class="stage" style="flex-direction:column;gap:1rem;">
+      <div class="box" id="mm-box">mm()</div>
+      <div>
+        <div id="mm-badge-desktop" class="mm-badge" style="background:rgba(120,80,255,0.15);color:var(--accent);border:1px solid rgba(120,80,255,0.3);display:none;">≥ 768px — desktop animation active</div>
+        <div id="mm-badge-mobile" class="mm-badge" style="background:rgba(255,92,138,0.15);color:var(--accent3);border:1px solid rgba(255,92,138,0.3);display:none;">< 768px — mobile animation active</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runMatchMedia()">run matchMedia</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> mm = <span class="k">gsap</span>.matchMedia();
+mm.add(<span class="s">"(min-width: 768px)"</span>, () => {
+  <span class="k">gsap</span>.to(<span class="s">"#mm-box"</span>, { x:<span class="n">200</span>, rotation:<span class="n">360</span>, duration:<span class="n">1</span> });
+});
+mm.add(<span class="s">"(max-width: 767px)"</span>, () => {
+  <span class="k">gsap</span>.to(<span class="s">"#mm-box"</span>, { y:<span class="n">80</span>, scale:<span class="n">1.5</span>, duration:<span class="n">1</span> });
+});</div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  GSAP 3.15.0 · Core API Demo · All commands covered<br />
+  <span style="color:var(--accent)">gsap.com</span> for docs · Built with GSAP CDN
+</footer>
+
+<script>
+// ── HERO ──────────────────────────────────────────────
+gsap.set('#hero-tag', { opacity: 0, y: -10 });
+gsap.set('#hero-title', { opacity: 0, y: 30 });
+gsap.set('#hero-desc', { opacity: 0, y: 20 });
+gsap.set('#hero-boxes', { opacity: 0 });
+
+const heroTl = gsap.timeline({ delay: 0.2 });
+heroTl
+  .to('#hero-tag', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' })
+  .to('#hero-title', { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, '-=0.3')
+  .to('#hero-desc', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.4')
+  .to('#hero-boxes', { opacity: 1, duration: 0.4 }, '-=0.2')
+  .from('.hero-box', { scale: 0, rotation: -90, stagger: 0.08, ease: 'back.out(2)', duration: 0.5 }, '-=0.3');
+
+gsap.to('.hero-box', { y: -8, stagger: 0.2, duration: 1.2, ease: 'sine.inOut', repeat: -1, yoyo: true });
+
+// ── TO ────────────────────────────────────────────────
+function runTo() {
+  gsap.set('#to-box', { x: 0 });
+  gsap.to('#to-box', { x: 200, duration: 1, ease: 'bounce.out' });
+}
+
+// ── FROM ──────────────────────────────────────────────
+function runFrom() {
+  gsap.killTweensOf('#from-box');
+  gsap.from('#from-box', { y: 60, opacity: 0, duration: 0.8, ease: 'back.out(1.7)' });
+}
+
+// ── FROMTO ────────────────────────────────────────────
+function runFromTo() {
+  gsap.fromTo('#fromto-box',
+    { x: -150, rotation: -90, opacity: 0 },
+    { x: 150, rotation: 90, opacity: 1, duration: 1.2, ease: 'power3.inOut' }
+  );
+}
+
+// ── SET ───────────────────────────────────────────────
+function runSet() {
+  gsap.set('#set-box', { opacity: 1, borderRadius: '10px', scale: 1.3, rotation: 45 });
+}
+
+// ── TIMELINE ──────────────────────────────────────────
+let mainTl;
+function runTimeline() {
+  gsap.set(['#tl-a','#tl-b','#tl-c','#tl-d'], { opacity: 0, y: 20 });
+  document.getElementById('tl-status').textContent = 'playing';
+  if (mainTl) mainTl.kill();
+  mainTl = gsap.timeline({
+    onUpdate() {
+      document.getElementById('tl-fill').style.width = (mainTl.progress() * 100) + '%';
+    },
+    onComplete() {
+      document.getElementById('tl-status').textContent = 'complete';
+    }
+  });
+  mainTl
+    .to('#tl-a', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out' })
+    .addLabel('mid')
+    .to('#tl-b', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out' }, '-=0.3')
+    .to('#tl-c', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out' }, '-=0.3')
+    .to('#tl-d', { opacity: 1, y: 0, duration: 0.6, ease: 'back.out' }, '-=0.3')
+    .call(() => { document.getElementById('tl-status').textContent = 'done!'; });
+}
+
+let addTl;
+function runAddLabel() {
+  gsap.set('#add-box', { opacity: 0, x: 0, rotation: 0, scale: 1 });
+  if (addTl) addTl.kill();
+  addTl = gsap.timeline();
+  addTl.addLabel('step1', 0);
+  addTl.addLabel('step2', 1);
+  addTl.to('#add-box', { opacity: 1, x: 100, duration: 0.8 }, 'step1');
+  addTl.to('#add-box', { rotation: 360, scale: 1.5, duration: 0.8, ease: 'elastic.out' }, 'step2');
+}
+
+function runCall() {
+  gsap.set('#call-box', { x: 0 });
+  document.getElementById('call-log').textContent = '⏳ waiting...';
+  const t = gsap.timeline();
+  t.to('#call-box', { x: 140, duration: 2, ease: 'none' });
+  t.call(() => { document.getElementById('call-log').textContent = '✓ callback fired!'; }, null, 1);
+}
+
+// ── PLAYBACK ──────────────────────────────────────────
+const pbTween = gsap.to('#pb-box', {
+  x: 200, duration: 2, ease: 'sine.inOut', repeat: -1, yoyo: true, paused: true,
+  onUpdate() {
+    document.getElementById('pb-bar').style.width = (Math.abs(pbTween.progress()) * 100) + '%';
+    document.getElementById('pb-status').textContent = 'playing';
+  },
+  onRepeat() {},
+  onReverseComplete() { document.getElementById('pb-status').textContent = 'reversed'; }
+});
+
+const seekTween = gsap.to('#seek-box', { x: 240, duration: 2, paused: true, ease: 'power2.inOut' });
+function doSeek(val) {
+  const t = (val / 100) * 2;
+  document.getElementById('seek-val').textContent = t.toFixed(1) + 's';
+  seekTween.pause();
+  seekTween.seek(t);
+}
+
+const tsTween = gsap.to('#ts-box', { x: 200, duration: 2, repeat: -1, yoyo: true, paused: true, ease: 'sine.inOut' });
+function doTimeScale(val) {
+  const scale = val / 10;
+  document.getElementById('ts-val').textContent = scale.toFixed(1) + '×';
+  tsTween.timeScale(scale);
+  if (!tsTween.isActive()) tsTween.play();
+}
+
+const progTween = gsap.to('#prog-box', { x: 220, duration: 2, paused: true, ease: 'power2.inOut' });
+function doProgress(val) {
+  const p = val / 100;
+  document.getElementById('prog-val').textContent = p.toFixed(2);
+  progTween.pause();
+  progTween.progress(p);
+}
+
+let killTween;
+function runKill() {
+  gsap.set('#kill-box', { x: 0, opacity: 1 });
+  document.getElementById('kill-status').textContent = 'running...';
+  document.getElementById('kill-dot').style.background = 'var(--accent2)';
+  killTween = gsap.to('#kill-box', { x: 200, duration: 4, ease: 'none' });
+}
+function doKill() {
+  if (killTween) killTween.kill();
+  document.getElementById('kill-status').textContent = 'killed at x=' + Math.round(gsap.getProperty('#kill-box','x'));
+  document.getElementById('kill-dot').style.background = 'var(--accent3)';
+}
+
+// ── STAGGER ───────────────────────────────────────────
+function runStagger1() {
+  gsap.set('#sg1 .sg-item', { opacity: 0, scale: 0.5 });
+  gsap.to('#sg1 .sg-item', { opacity: 1, scale: 1, duration: 0.5, stagger: 0.08, ease: 'back.out(1.7)' });
+}
+function runStagger2() {
+  gsap.set('#sg2 .sg-item', { opacity: 0, scale: 0.5 });
+  gsap.to('#sg2 .sg-item', { opacity: 1, scale: 1, duration: 0.6, stagger: { each: 0.08, from: 'center', ease: 'power2.inOut' } });
+}
+
+// ── UTILITIES ─────────────────────────────────────────
+const clampFn = gsap.utils.clamp(0, 100);
+function doClamp(v) {
+  document.getElementById('clamp-in').textContent = v;
+  document.getElementById('clamp-out').textContent = Math.round(clampFn(Number(v)));
+}
+
+const mapFn = gsap.utils.mapRange(0, 500, 0, 1);
+function doMap(v) {
+  document.getElementById('map-in').textContent = v;
+  document.getElementById('map-out').textContent = mapFn(Number(v)).toFixed(2);
+}
+
+function doInterp(v) {
+  const p = v / 100;
+  const color = gsap.utils.interpolate('#7850ff', '#00e5c0', p);
+  document.getElementById('interp-swatch').style.background = color;
+  document.getElementById('interp-val').textContent = 'progress: ' + p.toFixed(2);
+}
+
+const snapFn = gsap.utils.snap(25);
+function doSnap(v) {
+  document.getElementById('snap-in').textContent = v;
+  document.getElementById('snap-out').textContent = Math.round(snapFn(Number(v)));
+}
+
+let wrapCount = 0;
+
+const normFn = gsap.utils.normalize(0, 200);
+function doNorm(v) {
+  document.getElementById('norm-in').textContent = v;
+  document.getElementById('norm-out').textContent = normFn(Number(v)).toFixed(2);
+}
+
+function doRandom() {
+  const val = gsap.utils.random(0, 100, 5);
+  const el = document.getElementById('rand-display');
+  el.textContent = val;
+  gsap.from(el, { scale: 1.5, opacity: 0, duration: 0.3, ease: 'back.out' });
+}
+
+const pipeFn = gsap.utils.pipe(
+  gsap.utils.clamp(0, 100),
+  gsap.utils.mapRange(0, 100, 0, 1),
+  gsap.utils.snap(0.1)
+);
+function doPipe(v) {
+  const n = Number(v);
+  const clamped = Math.round(gsap.utils.clamp(0, 100)(n));
+  const mapped = gsap.utils.mapRange(0, 100, 0, 1)(clamped);
+  const out = gsap.utils.snap(0.1)(mapped);
+  document.getElementById('pipe-raw').textContent = n;
+  document.getElementById('pipe-clamped').textContent = clamped;
+  document.getElementById('pipe-mapped').textContent = mapped.toFixed(2);
+  document.getElementById('pipe-out').textContent = out.toFixed(1);
+}
+
+function runGetProp() {
+  gsap.to('#gp-box', { x: 180, duration: 1.5, ease: 'power2.out',
+    onUpdate() {
+      document.getElementById('gp-out').textContent = Math.round(gsap.getProperty('#gp-box','x')) + 'px';
+    }
+  });
+}
+
+function runInspect() {
+  gsap.to('#inspect-box', { x: 160, duration: 2, ease: 'sine.inOut', yoyo: true, repeat: 1 });
+}
+function checkInspect() {
+  document.getElementById('is-tweening-out').textContent = gsap.isTweening('#inspect-box').toString();
+  document.getElementById('tweens-count-out').textContent = gsap.getTweensOf('#inspect-box').length;
+}
+
+function runDelayedCall() {
+  const el = document.getElementById('dc-log');
+  el.textContent = '⏳ waiting 2 seconds...';
+  el.style.color = 'var(--accent4)';
+  gsap.delayedCall(2, () => {
+    el.textContent = '✓ delayedCall fired after 2s!';
+    el.style.color = 'var(--accent2)';
+    gsap.from(el, { scale: 1.2, duration: 0.4, ease: 'back.out' });
+  });
+}
+
+// ── CONFIG ────────────────────────────────────────────
+function runDefaults() {
+  gsap.defaults({ ease: 'elastic.out(1,0.3)', duration: 1.5 });
+  gsap.set('#def-box', { x: 0 });
+  gsap.to('#def-box', { x: 200 });
+}
+
+function runCustomEase() {
+  gsap.registerEase('staircase', p => Math.floor(p * 5) / 5);
+  gsap.set('#ease-box', { x: 0 });
+  gsap.to('#ease-box', { x: 200, ease: 'staircase', duration: 1.5 });
+}
+
+let tickerActive = false;
+let frameCount = 0;
+let tickerFn;
+function toggleTicker() {
+  const btn = document.getElementById('ticker-btn');
+  if (!tickerActive) {
+    frameCount = 0;
+    tickerFn = () => {
+      frameCount++;
+      document.getElementById('ticker-val').textContent = frameCount;
+    };
+    gsap.ticker.add(tickerFn);
+    tickerActive = true;
+    btn.textContent = 'stop ticker';
+    btn.classList.add('active');
+  } else {
+    gsap.ticker.remove(tickerFn);
+    tickerActive = false;
+    btn.textContent = 'start ticker';
+    btn.classList.remove('active');
+  }
+}
+
+let globalTweens = [];
+function startGlobal() {
+  globalTweens.forEach(t => t.kill());
+  gsap.set(['#g1','#g2','#g3'], { x: 0 });
+  globalTweens = [
+    gsap.to('#g1', { x: 140, duration: 1.5, repeat: -1, yoyo: true, ease: 'sine.inOut' }),
+    gsap.to('#g2', { x: 140, duration: 2, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 0.3 }),
+    gsap.to('#g3', { x: 140, duration: 1, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: 0.6 })
+  ];
+}
+function doGlobalSpeed(val) {
+  const s = val / 10;
+  document.getElementById('global-speed-val').textContent = s.toFixed(1) + '×';
+  gsap.globalTimeline.timeScale(s);
+}
+
+function runExportRoot() {
+  gsap.set('#er-box', { x: 0 });
+  gsap.to('#er-box', { x: 240, duration: 4, ease: 'none' });
+  setTimeout(() => {
+    const master = gsap.exportRoot();
+    master.timeScale(0.2);
+  }, 300);
+}
+
+// ── CONTEXT ───────────────────────────────────────────
+let activeCtx;
+function mountCtx() {
+  if (activeCtx) activeCtx.revert();
+  gsap.set(['#ctx-a','#ctx-b','#ctx-c'], { opacity: 0, x: 0 });
+  document.getElementById('ctx-status').textContent = 'mounted — animations running';
+  document.getElementById('ctx-dot').style.background = 'var(--accent2)';
+  activeCtx = gsap.context(() => {
+    gsap.to('#ctx-a', { opacity: 1, x: 60, duration: 0.7, ease: 'back.out' });
+    gsap.to('#ctx-b', { opacity: 1, x: 60, duration: 0.7, ease: 'back.out', delay: 0.15 });
+    gsap.to('#ctx-c', { opacity: 1, x: 60, duration: 0.7, ease: 'back.out', delay: 0.3 });
+  });
+}
+function unmountCtx() {
+  if (activeCtx) {
+    activeCtx.revert();
+    document.getElementById('ctx-status').textContent = 'unmounted — ctx.revert() called';
+    document.getElementById('ctx-dot').style.background = 'var(--accent3)';
+  }
+}
+
+function runMatchMedia() {
+  const mm = gsap.matchMedia();
+  gsap.set('#mm-box', { x: 0, y: 0, scale: 1, rotation: 0 });
+  const dBadge = document.getElementById('mm-badge-desktop');
+  const mBadge = document.getElementById('mm-badge-mobile');
+  mm.add('(min-width: 768px)', () => {
+    dBadge.style.display = 'inline-block';
+    mBadge.style.display = 'none';
+    gsap.to('#mm-box', { x: 180, rotation: 360, duration: 1, ease: 'power2.out', repeat: 1, yoyo: true });
+  });
+  mm.add('(max-width: 767px)', () => {
+    mBadge.style.display = 'inline-block';
+    dBadge.style.display = 'none';
+    gsap.to('#mm-box', { y: 60, scale: 1.5, duration: 1, ease: 'elastic.out', repeat: 1, yoyo: true });
+  });
+}
+</script>
+</body>
+</html>

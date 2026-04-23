@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSAP ScrollTrigger — Complete Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.08);
+    --border-accent: rgba(120,80,255,0.4);
+    --text: #f0f0f8;
+    --muted: rgba(240,240,248,0.45);
+    --accent: #7850ff;
+    --accent2: #00e5c0;
+    --accent3: #ff5c8a;
+    --accent4: #ffb830;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; gap: 0; height: 52px;
+    overflow-x: auto;
+  }
+  nav a {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    text-decoration: none; padding: 0 14px; height: 52px;
+    display: flex; align-items: center; white-space: nowrap;
+    border-right: 1px solid var(--border);
+    transition: color 0.2s, background 0.2s;
+  }
+  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+  /* LAYOUT */
+  main { padding-top: 52px; }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 4rem 2rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,192,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,192,0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .hero-glow {
+    position: absolute; width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(0,229,192,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+  #hero .tag {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    border: 1px solid rgba(120,80,255,0.4); padding: 4px 14px;
+    border-radius: 999px; margin-bottom: 2rem;
+    display: inline-block; opacity: 0;
+  }
+  #hero h1 {
+    font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem);
+    font-weight: 700; line-height: 1; letter-spacing: -2px;
+    margin-bottom: 1.5rem; opacity: 0;
+  }
+  #hero h1 span { color: var(--accent2); }
+  #hero p {
+    font-size: 16px; color: var(--muted); max-width: 560px;
+    margin-bottom: 3rem; opacity: 0;
+  }
+  .scroll-hint {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0;
+  }
+  .scroll-hint span { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; }
+  .scroll-arrow {
+    width: 24px; height: 24px; border-right: 2px solid var(--accent2);
+    border-bottom: 2px solid var(--accent2); transform: rotate(45deg);
+  }
+
+  /* SECTIONS */
+  section {
+    padding: 5rem 2rem;
+    max-width: 900px; margin: 0 auto;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: var(--mono); font-size: 10px; color: var(--accent2);
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-family: var(--mono); font-size: 1.8rem; font-weight: 700;
+    margin-bottom: 0.75rem; letter-spacing: -1px;
+  }
+  .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+
+  /* DEMO CARDS */
+  .demo-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
+    transition: border-color 0.2s;
+  }
+  .demo-card:hover { border-color: var(--border-accent); }
+  .demo-card h3 {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--accent); margin-bottom: 0.5rem;
+  }
+  .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+
+  /* STAGE */
+  .stage {
+    background: var(--surface2); border-radius: 12px;
+    padding: 2rem; min-height: 100px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 1rem;
+    position: relative; overflow: hidden;
+  }
+
+  /* BOX */
+  .box {
+    width: 60px; height: 60px; border-radius: 10px;
+    background: var(--accent); display: flex; align-items: center;
+    justify-content: center; font-family: var(--mono); font-size: 10px;
+    color: white; font-weight: 700; flex-shrink: 0;
+  }
+  .box.teal { background: var(--accent2); color: #0a0a0f; }
+  .box.pink { background: var(--accent3); }
+  .box.amber { background: var(--accent4); color: #0a0a0f; }
+
+  /* CONTROLS */
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
+  .btn {
+    font-family: var(--mono); font-size: 11px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--text); background: rgba(120,80,255,0.1); }
+  .btn.primary { border-color: var(--accent2); color: var(--accent2); }
+  .btn.primary:hover { background: rgba(0,229,192,0.1); }
+
+  /* CODE */
+  .code-snippet {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; color: var(--muted);
+    white-space: pre-wrap; word-break: break-all;
+    margin-top: 1rem;
+  }
+  .code-snippet .k { color: var(--accent); }
+  .code-snippet .s { color: var(--accent2); }
+  .code-snippet .n { color: var(--accent4); }
+  .code-snippet .c { color: rgba(240,240,248,0.25); }
+
+  /* STATUS */
+  .status-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); margin-right: 6px;
+  }
+  .status-dot.active { background: var(--accent2); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .status { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .status-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 0.75rem 0; }
+
+  /* PROGRESS */
+  .progress-wrap {
+    height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 0.75rem;
+  }
+  .progress-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px; transition: width 0.05s linear;
+  }
+
+  /* ─────────────── SCROLL DEMOS ─────────────── */
+
+  /* Long scroll area for basic trigger demos */
+  .scroll-demo-area {
+    height: 320px; position: relative; overflow: hidden;
+    background: var(--surface2); border-radius: 12px; margin-bottom: 1rem;
+  }
+
+  /* BATCH CARDS */
+  .batch-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px;
+  }
+  .batch-card {
+    height: 70px; border-radius: 10px;
+    background: var(--accent); opacity: 0; transform: translateY(40px);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; color: white; font-weight: 700;
+  }
+  .batch-card:nth-child(3n+1) { background: var(--accent); }
+  .batch-card:nth-child(3n+2) { background: var(--accent3); }
+  .batch-card:nth-child(3n+3) { background: var(--accent2); color: #0a0a0f; }
+
+  /* TOGGLE CLASS DEMO */
+  .tc-item {
+    padding: 12px 20px; border-radius: 10px; border: 1px solid var(--border);
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    transition: all 0.3s; margin-bottom: 10px;
+  }
+  .tc-item.is-active {
+    border-color: var(--accent2); color: var(--accent2);
+    background: rgba(0,229,192,0.08); transform: translateX(12px);
+  }
+
+  /* PARALLAX LAYERS */
+  .parallax-scene {
+    position: relative; height: 240px; overflow: hidden; border-radius: 12px;
+    background: linear-gradient(180deg, #0a0520 0%, #0a1a20 100%);
+    margin-bottom: 1rem;
+  }
+  .parallax-layer {
+    position: absolute; width: 100%; display: flex; justify-content: center; align-items: center;
+    font-family: var(--mono); font-weight: 700; pointer-events: none;
+  }
+
+  /* HORIZONTAL SCROLL */
+  .h-scroll-wrapper {
+    overflow: hidden; border-radius: 12px; margin-bottom: 1rem;
+    position: relative;
+  }
+  .h-scroll-track {
+    display: flex;
+  }
+  .h-panel {
+    min-width: 100%; height: 260px; display: flex; align-items: center;
+    justify-content: center; flex-direction: column; gap: 12px; flex-shrink: 0;
+    border-radius: 12px; padding: 2rem;
+  }
+  .h-panel:nth-child(1) { background: linear-gradient(135deg, rgba(120,80,255,0.15), rgba(120,80,255,0.05)); border: 1px solid rgba(120,80,255,0.2); }
+  .h-panel:nth-child(2) { background: linear-gradient(135deg, rgba(0,229,192,0.15), rgba(0,229,192,0.05)); border: 1px solid rgba(0,229,192,0.2); }
+  .h-panel:nth-child(3) { background: linear-gradient(135deg, rgba(255,92,138,0.15), rgba(255,92,138,0.05)); border: 1px solid rgba(255,92,138,0.2); }
+  .h-panel:nth-child(4) { background: linear-gradient(135deg, rgba(255,184,48,0.15), rgba(255,184,48,0.05)); border: 1px solid rgba(255,184,48,0.2); }
+  .h-panel-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .h-panel-num {
+    font-family: var(--mono); font-size: 3rem; font-weight: 700; line-height: 1;
+  }
+
+  /* PIN SECTION */
+  .pin-container {
+    overflow: hidden; border-radius: 12px; margin-bottom: 1rem; position: relative;
+  }
+  .pin-stage {
+    background: var(--surface2); padding: 2rem; display: flex;
+    align-items: center; justify-content: center; min-height: 180px; border-radius: 12px;
+    position: relative;
+  }
+  .pin-bar {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: var(--border);
+  }
+  .pin-bar-fill {
+    height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent2), var(--accent));
+  }
+
+  /* VALUE DISPLAY */
+  .val-box {
+    font-family: var(--mono); font-size: 12px; color: var(--accent2);
+    background: rgba(0,229,192,0.06); border: 1px solid rgba(0,229,192,0.15);
+    padding: 4px 10px; border-radius: 6px; display: inline-block;
+  }
+
+  /* SNAP DEMO */
+  .snap-track { position: relative; height: 6px; background: var(--border); border-radius: 3px; margin: 1rem 0; }
+  .snap-fill { height: 100%; width: 0%; background: var(--accent3); border-radius: 3px; }
+  .snap-marker {
+    position: absolute; top: 50%; transform: translate(-50%,-50%);
+    width: 12px; height: 12px; border-radius: 50%; background: rgba(255,92,138,0.3);
+    border: 2px solid var(--accent3);
+  }
+
+  /* ENTRANCE CARDS (batch demo area) */
+  .entrance-area { padding: 1.5rem 0; }
+
+  /* FOOTER */
+  footer {
+    text-align: center; padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#basic">Basic Trigger</a>
+  <a href="#scrub">Scrub</a>
+  <a href="#pin">Pin</a>
+  <a href="#timeline">Timeline</a>
+  <a href="#batch">Batch</a>
+  <a href="#toggleclass">toggleClass</a>
+  <a href="#callbacks">Callbacks</a>
+  <a href="#horizontal">Horizontal</a>
+  <a href="#snap">Snap</a>
+  <a href="#create">ST.create()</a>
+</nav>
+
+<main>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="tag" id="hero-tag">GSAP 3.15 · ScrollTrigger · Complete Demo</div>
+  <h1 id="hero-title">Scroll<br /><span>Trigger</span></h1>
+  <p id="hero-desc">Every ScrollTrigger concept — triggers, scrub, pinning, batching, snapping, horizontal scroll, and callbacks. Scroll down to explore.</p>
+  <div class="scroll-hint" id="scroll-hint">
+    <span>SCROLL DOWN</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
+
+<!-- ─────────────── 01 BASIC TRIGGER ─────────────── -->
+<section id="basic">
+  <div class="section-label">01 — Basic Trigger</div>
+  <h2>scrollTrigger: { trigger }</h2>
+  <p class="section-desc">Attach a ScrollTrigger to any tween via the scrollTrigger property. Control when it fires with start/end and what it does with toggleActions.</p>
+
+  <div class="demo-card">
+    <h3>toggleActions — play / reverse</h3>
+    <p>The box animates in when it enters the viewport and reverses when it leaves. Scroll back up to see it reset.</p>
+    <div class="stage">
+      <div class="box" id="basic-box">enter</div>
+    </div>
+    <div class="status-row">
+      <span class="status"><span class="status-dot" id="basic-dot"></span><span id="basic-status">waiting…</span></span>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.from(<span class="s">"#basic-box"</span>, {
+  x: <span class="n">-120</span>, opacity: <span class="n">0</span>, scale: <span class="n">0.5</span>, rotation: <span class="n">-45</span>, duration: <span class="n">0.8</span>,
+  ease: <span class="s">"back.out(1.7)"</span>,
+  scrollTrigger: {
+    trigger: <span class="s">"#basic-box"</span>,
+    start: <span class="s">"top 85%"</span>,   <span class="c">// top of box hits 85% down viewport</span>
+    end:   <span class="s">"bottom 20%"</span>,
+    toggleActions: <span class="s">"play none none reverse"</span>
+  }
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>start / end — position syntax</h3>
+    <p>Four boxes each have a different start/end combination. Watch them trigger at different scroll positions.</p>
+    <div class="stage" style="flex-direction:column; gap:12px; min-height:180px;">
+      <div style="display:flex; gap:12px; align-items:center; width:100%;">
+        <div class="box" id="pos-a" style="flex-shrink:0;">A</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">start: "top 90%"</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; width:100%;">
+        <div class="box teal" id="pos-b" style="flex-shrink:0;">B</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">start: "top 75%"</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; width:100%;">
+        <div class="box pink" id="pos-c" style="flex-shrink:0;">C</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">start: "top 60%"</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; width:100%;">
+        <div class="box amber" id="pos-d" style="flex-shrink:0;">D</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">start: "top 45%"</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="c">// "triggerPosition viewportPosition"</span>
+<span class="k">gsap</span>.from(<span class="s">"#pos-a"</span>, { opacity:<span class="n">0</span>, x:<span class="n">-60</span>, scrollTrigger: { trigger:<span class="s">"#pos-a"</span>, start:<span class="s">"top 90%"</span> } });
+<span class="k">gsap</span>.from(<span class="s">"#pos-b"</span>, { opacity:<span class="n">0</span>, x:<span class="n">-60</span>, scrollTrigger: { trigger:<span class="s">"#pos-b"</span>, start:<span class="s">"top 75%"</span> } });
+<span class="k">gsap</span>.from(<span class="s">"#pos-c"</span>, { opacity:<span class="n">0</span>, x:<span class="n">-60</span>, scrollTrigger: { trigger:<span class="s">"#pos-c"</span>, start:<span class="s">"top 60%"</span> } });
+<span class="k">gsap</span>.from(<span class="s">"#pos-d"</span>, { opacity:<span class="n">0</span>, x:<span class="n">-60</span>, scrollTrigger: { trigger:<span class="s">"#pos-d"</span>, start:<span class="s">"top 45%"</span> } });</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>once: true — fire and forget</h3>
+    <p>The ScrollTrigger kills itself after the animation plays once. Scrolling back will not reset it.</p>
+    <div class="stage">
+      <div class="box pink" id="once-box">once</div>
+    </div>
+    <div class="status-row">
+      <span class="status"><span class="status-dot" id="once-dot"></span><span id="once-status">waiting…</span></span>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.from(<span class="s">"#once-box"</span>, {
+  opacity: <span class="n">0</span>, scale: <span class="n">0</span>, rotation: <span class="n">180</span>, duration: <span class="n">1</span>, ease: <span class="s">"elastic.out(1,0.5)"</span>,
+  scrollTrigger: {
+    trigger: <span class="s">"#once-box"</span>,
+    start: <span class="s">"top 85%"</span>,
+    once: <span class="n">true</span>   <span class="c">// kills the ScrollTrigger after it fires</span>
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 02 SCRUB ─────────────── -->
+<section id="scrub">
+  <div class="section-label">02 — Scrub</div>
+  <h2>scrub — scroll-linked animation</h2>
+  <p class="section-desc">Tie animation progress directly to scroll position. scrub: true = instant sync; scrub: number = seconds of lag/smoothing.</p>
+
+  <div class="demo-card">
+    <h3>scrub: true — direct link</h3>
+    <p>The box moves and rotates exactly as you scroll through this section. Progress bar mirrors it.</p>
+    <div class="stage" id="scrub-trigger-1">
+      <div class="box teal" id="scrub-box-1">scrub</div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="scrub-fill-1"></div></div>
+    <div class="status-row">
+      <span class="val-box" id="scrub-prog-1">0%</span>
+      <span class="status">scroll progress</span>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#scrub-box-1"</span>, {
+  x: <span class="n">200</span>, rotation: <span class="n">360</span>, scale: <span class="n">1.4</span>,
+  ease: <span class="s">"none"</span>,  <span class="c">// use none for predictable scrub</span>
+  scrollTrigger: {
+    trigger: <span class="s">"#scrub-trigger-1"</span>,
+    start: <span class="s">"top 70%"</span>,
+    end: <span class="s">"bottom 30%"</span>,
+    scrub: <span class="n">true</span>,
+    onUpdate: self => updateScrubUI(<span class="n">1</span>, self.progress)
+  }
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>scrub: 1 — smoothed (1 second lag)</h3>
+    <p>A 1-second smoothing lag means the animation catches up after you stop scrolling. Try fast vs. slow scrolling.</p>
+    <div class="stage" id="scrub-trigger-2">
+      <div class="box amber" id="scrub-box-2">lag</div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="scrub-fill-2"></div></div>
+    <div class="status-row">
+      <span class="val-box" id="scrub-prog-2">0%</span>
+      <span class="status">animation progress (lags behind)</span>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#scrub-box-2"</span>, {
+  x: <span class="n">200</span>, borderRadius: <span class="s">"50%"</span>, backgroundColor: <span class="s">"#ff5c8a"</span>,
+  ease: <span class="s">"none"</span>,
+  scrollTrigger: {
+    trigger: <span class="s">"#scrub-trigger-2"</span>,
+    start: <span class="s">"top 70%"</span>, end: <span class="s">"bottom 30%"</span>,
+    scrub: <span class="n">1</span>  <span class="c">// 1 second to catch up</span>
+  }
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>Multi-property parallax scrub</h3>
+    <p>Multiple elements scrub at different speeds — classic parallax depth effect.</p>
+    <div class="parallax-scene" id="parallax-trigger">
+      <div class="parallax-layer" id="pl-bg" style="font-size:5rem; color:rgba(120,80,255,0.08); top:20%;">BG</div>
+      <div class="parallax-layer" id="pl-mid" style="font-size:3rem; color:rgba(0,229,192,0.25); top:35%;">MID</div>
+      <div class="parallax-layer" id="pl-fg" style="font-size:1.5rem; color:var(--text); top:50%;">FOREGROUND</div>
+    </div>
+    <div class="code-snippet"><span class="c">// Each layer moves at a different rate — slow parallax</span>
+<span class="k">gsap</span>.to(<span class="s">"#pl-bg"</span>,  { y: <span class="n">-80</span>, ease:<span class="s">"none"</span>, scrollTrigger: { trigger:<span class="s">"#parallax-trigger"</span>, scrub:<span class="n">true</span> } });
+<span class="k">gsap</span>.to(<span class="s">"#pl-mid"</span>, { y: <span class="n">-40</span>, ease:<span class="s">"none"</span>, scrollTrigger: { trigger:<span class="s">"#parallax-trigger"</span>, scrub:<span class="n">true</span> } });
+<span class="k">gsap</span>.to(<span class="s">"#pl-fg"</span>,  { y: <span class="n">-10</span>, ease:<span class="s">"none"</span>, scrollTrigger: { trigger:<span class="s">"#parallax-trigger"</span>, scrub:<span class="n">true</span> } });</div>
+  </div>
+</section>
+
+<!-- ─────────────── 03 PIN ─────────────── -->
+<section id="pin">
+  <div class="section-label">03 — Pin</div>
+  <h2>pin — stick while scrolling</h2>
+  <p class="section-desc">Pin an element in place while a scroll range is active. Combine with scrub to build narrative scroll experiences.</p>
+
+  <div class="demo-card">
+    <h3>pin: true with scrub</h3>
+    <p>The pinned panel stays fixed while you scroll through a 500px range. The animation inside scrubs with scroll.</p>
+    <div class="pin-container" id="pin-outer">
+      <div class="pin-stage" id="pin-panel">
+        <div style="text-align:center;">
+          <div class="box" id="pin-box" style="margin:0 auto 1rem;">pin</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">Panel is pinned while scrolling through 500px</div>
+          <div class="pin-bar" style="border-radius:0;"><div class="pin-bar-fill" id="pin-bar-fill"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="status-row">
+      <span class="val-box" id="pin-prog">0%</span>
+      <span class="status" id="pin-status">scroll to pin this panel</span>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#pin-box"</span>, {
+  rotation: <span class="n">360</span>, scale: <span class="n">1.5</span>, backgroundColor: <span class="s">"#00e5c0"</span>,
+  ease: <span class="s">"none"</span>,
+  scrollTrigger: {
+    trigger: <span class="s">"#pin-panel"</span>,
+    start: <span class="s">"top top"</span>,
+    end: <span class="s">"+=500"</span>,   <span class="c">// pin for 500px of scroll</span>
+    pin: <span class="n">true</span>,
+    scrub: <span class="n">1</span>,
+    onUpdate: self => updatePinUI(self.progress)
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 04 TIMELINE ─────────────── -->
+<section id="timeline">
+  <div class="section-label">04 — Timeline + ScrollTrigger</div>
+  <h2>gsap.timeline() with scrollTrigger</h2>
+  <p class="section-desc">Attach a ScrollTrigger to a timeline and all its child tweens become scroll-driven as one unit.</p>
+
+  <div class="demo-card">
+    <h3>Sequenced timeline scrubbed by scroll</h3>
+    <p>A 4-step timeline scrubs as you scroll. Each step is a separate tween but the whole timeline is one scroll unit.</p>
+    <div class="stage" id="tl-trigger">
+      <div class="box" id="tl-box-a" style="opacity:0;">A</div>
+      <div class="box teal" id="tl-box-b" style="opacity:0;">B</div>
+      <div class="box pink" id="tl-box-c" style="opacity:0;">C</div>
+      <div class="box amber" id="tl-box-d" style="opacity:0;">D</div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="tl-fill"></div></div>
+    <div class="status-row">
+      <span class="val-box" id="tl-prog">step 0/4</span>
+      <span class="status">scroll to drive the timeline</span>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> tl = <span class="k">gsap</span>.timeline({
+  scrollTrigger: {
+    trigger: <span class="s">"#tl-trigger"</span>,
+    start: <span class="s">"top 70%"</span>, end: <span class="s">"+=600"</span>,
+    scrub: <span class="n">1</span>,
+    onUpdate: self => updateTLUI(self.progress)
+  }
+});
+tl.from(<span class="s">"#tl-box-a"</span>, { opacity:<span class="n">0</span>, y:<span class="n">40</span>, duration:<span class="n">1</span> })
+  .from(<span class="s">"#tl-box-b"</span>, { opacity:<span class="n">0</span>, y:<span class="n">40</span>, duration:<span class="n">1</span> }, <span class="s">"-=0.5"</span>)
+  .from(<span class="s">"#tl-box-c"</span>, { opacity:<span class="n">0</span>, y:<span class="n">40</span>, duration:<span class="n">1</span> }, <span class="s">"-=0.5"</span>)
+  .from(<span class="s">"#tl-box-d"</span>, { opacity:<span class="n">0</span>, y:<span class="n">40</span>, duration:<span class="n">1</span> }, <span class="s">"-=0.5"</span>);</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>Timeline with labels + seek</h3>
+    <p>Labels act as named waypoints in the scroll-driven timeline.</p>
+    <div class="stage" id="label-trigger">
+      <div class="box" id="label-box" style="opacity:0; transform-origin:center;">label</div>
+      <div id="label-display" style="font-family:var(--mono);font-size:12px;color:var(--accent2);">—</div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> tl = <span class="k">gsap</span>.timeline({ scrollTrigger: { trigger:<span class="s">"#label-trigger"</span>, scrub:<span class="n">1</span>, end:<span class="s">"+=400"</span> } });
+tl.addLabel(<span class="s">"enter"</span>)
+  .from(<span class="s">"#label-box"</span>, { opacity:<span class="n">0</span>, scale:<span class="n">0</span>, duration:<span class="n">1</span> })
+  .addLabel(<span class="s">"spin"</span>)
+  .to(<span class="s">"#label-box"</span>, { rotation:<span class="n">360</span>, duration:<span class="n">1</span> })
+  .addLabel(<span class="s">"exit"</span>)
+  .to(<span class="s">"#label-box"</span>, { x:<span class="n">100</span>, opacity:<span class="n">0.4</span>, duration:<span class="n">1</span> });</div>
+  </div>
+</section>
+
+<!-- ─────────────── 05 BATCH ─────────────── -->
+<section id="batch">
+  <div class="section-label">05 — ScrollTrigger.batch()</div>
+  <h2>ScrollTrigger.batch()</h2>
+  <p class="section-desc">Batch-animate elements that enter the viewport around the same time. One ScrollTrigger per element, callbacks delivered together with staggers.</p>
+
+  <div class="demo-card">
+    <h3>Staggered entrance via batch</h3>
+    <p>Scroll down to see the cards animate in with a stagger. Each card has its own ScrollTrigger but they fire as a coordinated group.</p>
+    <div class="entrance-area">
+      <div class="batch-grid" id="batch-grid">
+        <div class="batch-card">01</div>
+        <div class="batch-card">02</div>
+        <div class="batch-card">03</div>
+        <div class="batch-card">04</div>
+        <div class="batch-card">05</div>
+        <div class="batch-card">06</div>
+        <div class="batch-card">07</div>
+        <div class="batch-card">08</div>
+        <div class="batch-card">09</div>
+        <div class="batch-card">10</div>
+        <div class="batch-card">11</div>
+        <div class="batch-card">12</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="resetBatch()">reset batch</button>
+    </div>
+    <div class="code-snippet"><span class="k">ScrollTrigger</span>.batch(<span class="s">".batch-card"</span>, {
+  start: <span class="s">"top 90%"</span>,
+  onEnter: (elements) => {
+    <span class="k">gsap</span>.to(elements, { opacity:<span class="n">1</span>, y:<span class="n">0</span>, stagger:<span class="n">0.08</span>, duration:<span class="n">0.6</span>, ease:<span class="s">"back.out(1.5)"</span> });
+  },
+  onLeaveBack: (elements) => {
+    <span class="k">gsap</span>.to(elements, { opacity:<span class="n">0</span>, y:<span class="n">40</span>, stagger:<span class="n">0.04</span> });
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 06 TOGGLECLASS ─────────────── -->
+<section id="toggleclass">
+  <div class="section-label">06 — toggleClass</div>
+  <h2>toggleClass — CSS-driven state</h2>
+  <p class="section-desc">Add/remove a CSS class when the ScrollTrigger is active. No JS animation required — great for style changes.</p>
+
+  <div class="demo-card">
+    <h3>toggleClass: "is-active"</h3>
+    <p>Each row gets the <code style="color:var(--accent2)">is-active</code> class added when it enters the viewport and removed when it leaves.</p>
+    <div class="stage" style="flex-direction:column; align-items:stretch; gap:8px; padding:1rem;">
+      <div class="tc-item" id="tc-1">Row 1 — waiting to enter viewport</div>
+      <div class="tc-item" id="tc-2">Row 2 — waiting to enter viewport</div>
+      <div class="tc-item" id="tc-3">Row 3 — waiting to enter viewport</div>
+    </div>
+    <div class="code-snippet"><span class="k">ScrollTrigger</span>.create({
+  trigger: <span class="s">"#tc-1"</span>,
+  start: <span class="s">"top 85%"</span>, end: <span class="s">"bottom 15%"</span>,
+  toggleClass: { targets: <span class="s">"#tc-1"</span>, className: <span class="s">"is-active"</span> }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 07 CALLBACKS ─────────────── -->
+<section id="callbacks">
+  <div class="section-label">07 — Callbacks</div>
+  <h2>onEnter / onLeave / onUpdate / onToggle</h2>
+  <p class="section-desc">React to scroll events with callbacks. Each fires at specific moments relative to the start/end positions.</p>
+
+  <div class="demo-card">
+    <h3>All four directional callbacks</h3>
+    <p>Scroll in and out of this zone to see each callback fire.</p>
+    <div class="stage" id="cb-trigger">
+      <div class="box teal" id="cb-box">zone</div>
+    </div>
+    <div class="status-row">
+      <span class="status"><span class="status-dot" id="cb-dot"></span><span id="cb-status">outside trigger zone</span></span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:0.75rem;">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">onEnter (↓ cross start)</div>
+        <div class="val-box" id="cb-enter">0</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">onLeave (↓ cross end)</div>
+        <div class="val-box" id="cb-leave">0</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">onEnterBack (↑ cross end)</div>
+        <div class="val-box" id="cb-enterback">0</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">onLeaveBack (↑ cross start)</div>
+        <div class="val-box" id="cb-leaveback">0</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">ScrollTrigger</span>.create({
+  trigger: <span class="s">"#cb-trigger"</span>,
+  start: <span class="s">"top 70%"</span>, end: <span class="s">"bottom 30%"</span>,
+  onEnter:      self => increment(<span class="s">"cb-enter"</span>),
+  onLeave:      self => increment(<span class="s">"cb-leave"</span>),
+  onEnterBack:  self => increment(<span class="s">"cb-enterback"</span>),
+  onLeaveBack:  self => increment(<span class="s">"cb-leaveback"</span>),
+  onToggle:     self => updateActive(self.isActive),
+  onUpdate:     self => { <span class="c">/* fires every frame when active */</span> }
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>onUpdate — real-time progress</h3>
+    <p>onUpdate fires every frame while the trigger is active (or when scrubbing). Reads progress, direction, and velocity.</p>
+    <div class="stage" id="update-trigger">
+      <div class="box pink" id="update-box">update</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:0.75rem;">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">progress</div>
+        <div class="val-box" id="upd-progress">—</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">direction</div>
+        <div class="val-box" id="upd-direction">—</div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px;">isActive</div>
+        <div class="val-box" id="upd-active">—</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">ScrollTrigger</span>.create({
+  trigger: <span class="s">"#update-trigger"</span>,
+  start: <span class="s">"top 75%"</span>, end: <span class="s">"bottom 25%"</span>,
+  onUpdate: self => {
+    show(self.progress.toFixed(3));   <span class="c">// 0 → 1</span>
+    show(self.direction);             <span class="c">// 1 (down) or -1 (up)</span>
+    show(self.isActive);              <span class="c">// true while between start/end</span>
+    self.getVelocity();               <span class="c">// scroll pixels/sec</span>
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 08 HORIZONTAL ─────────────── -->
+<section id="horizontal">
+  <div class="section-label">08 — Horizontal Scroll</div>
+  <h2>containerAnimation — fake horizontal</h2>
+  <p class="section-desc">Pin a section and drive horizontal movement with vertical scroll. Use ease: "none" on the container animation — required for accurate sync.</p>
+
+  <div class="demo-card">
+    <h3>Vertical scroll → horizontal panels</h3>
+    <p>Scroll this section to move through 4 panels horizontally. The section is pinned while you scroll through 3× the viewport height.</p>
+    <div class="h-scroll-wrapper" id="h-wrapper">
+      <div class="h-scroll-track" id="h-track">
+        <div class="h-panel">
+          <div class="h-panel-num" style="color:var(--accent);">01</div>
+          <div class="h-panel-label" style="color:var(--accent);">PANEL ONE</div>
+        </div>
+        <div class="h-panel">
+          <div class="h-panel-num" style="color:var(--accent2);">02</div>
+          <div class="h-panel-label" style="color:var(--accent2);">PANEL TWO</div>
+        </div>
+        <div class="h-panel">
+          <div class="h-panel-num" style="color:var(--accent3);">03</div>
+          <div class="h-panel-label" style="color:var(--accent3);">PANEL THREE</div>
+        </div>
+        <div class="h-panel">
+          <div class="h-panel-num" style="color:var(--accent4);">04</div>
+          <div class="h-panel-label" style="color:var(--accent4);">PANEL FOUR</div>
+        </div>
+      </div>
+    </div>
+    <div class="status-row">
+      <span class="val-box" id="h-panel-num">Panel 1 / 4</span>
+      <span class="status">scroll to move through panels</span>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> track = document.querySelector(<span class="s">"#h-track"</span>);
+<span class="k">const</span> hTween = <span class="k">gsap</span>.to(track, {
+  xPercent: <span class="n">-75</span>,  <span class="c">// 4 panels × 25% = move 75% left</span>
+  ease: <span class="s">"none"</span>,  <span class="c">// REQUIRED for containerAnimation sync</span>
+  scrollTrigger: {
+    trigger: <span class="s">"#h-wrapper"</span>,
+    start: <span class="s">"top top"</span>,
+    end: <span class="s">"+=2000"</span>,
+    scrub: <span class="n">1</span>,
+    pin: <span class="n">true</span>,
+    onUpdate: self => updatePanelNum(self.progress)
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 09 SNAP ─────────────── -->
+<section id="snap">
+  <div class="section-label">09 — Snap</div>
+  <h2>snap — jump to waypoints</h2>
+  <p class="section-desc">After scrolling, snap the playhead to the nearest defined progress value. Works like scroll-snap but for any animation.</p>
+
+  <div class="demo-card">
+    <h3>snap: 0.25 — four equal steps</h3>
+    <p>After you stop scrolling, the animation snaps to the nearest 25% increment (0, 0.25, 0.5, 0.75, 1).</p>
+    <div class="stage" id="snap-trigger">
+      <div class="box" id="snap-box">snap</div>
+    </div>
+    <div class="snap-track">
+      <div class="snap-fill" id="snap-fill"></div>
+      <div class="snap-marker" style="left:0%"></div>
+      <div class="snap-marker" style="left:25%"></div>
+      <div class="snap-marker" style="left:50%"></div>
+      <div class="snap-marker" style="left:75%"></div>
+      <div class="snap-marker" style="left:100%"></div>
+    </div>
+    <div class="status-row">
+      <span class="val-box" id="snap-prog">step 0</span>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#snap-box"</span>, {
+  x: <span class="n">220</span>, rotation: <span class="n">360</span>, ease: <span class="s">"none"</span>,
+  scrollTrigger: {
+    trigger: <span class="s">"#snap-trigger"</span>,
+    start: <span class="s">"top 70%"</span>, end: <span class="s">"+=600"</span>,
+    scrub: <span class="n">0.5</span>,
+    snap: {
+      snapTo: <span class="n">0.25</span>,          <span class="c">// snap to 0, 0.25, 0.5, 0.75, 1</span>
+      duration: <span class="n">0.4</span>,          <span class="c">// time to animate snap</span>
+      ease: <span class="s">"power1.inOut"</span>
+    },
+    onUpdate: self => updateSnapUI(self.progress)
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ─────────────── 10 ST.CREATE ─────────────── -->
+<section id="create">
+  <div class="section-label">10 — Standalone</div>
+  <h2>ScrollTrigger.create() — no animation</h2>
+  <p class="section-desc">A ScrollTrigger without an animation — pure event detection. Use callbacks to run any custom logic when entering/leaving scroll zones.</p>
+
+  <div class="demo-card">
+    <h3>ScrollTrigger.create() — scroll zone detector</h3>
+    <p>No GSAP animation is attached. The trigger just fires callbacks and updates the UI as you scroll through it.</p>
+    <div class="stage" id="standalone-trigger">
+      <div style="text-align:center;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;">SCROLL ZONE ACTIVE</div>
+        <div id="standalone-indicator" style="
+          width:60px;height:60px;border-radius:50%;
+          background:var(--border);border:2px solid var(--border);
+          display:flex;align-items:center;justify-content:center;
+          font-family:var(--mono);font-size:10px;color:var(--muted);
+          margin:0 auto; transition:all 0.4s;
+        ">OFF</div>
+      </div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="standalone-fill"></div></div>
+    <div class="status-row">
+      <span class="val-box" id="standalone-prog">0.000</span>
+      <span class="status" id="standalone-status">outside zone</span>
+    </div>
+    <div class="code-snippet"><span class="k">ScrollTrigger</span>.create({
+  trigger: <span class="s">"#standalone-trigger"</span>,
+  start: <span class="s">"top 75%"</span>,
+  end: <span class="s">"bottom 25%"</span>,
+  onEnter:     () => setActive(<span class="n">true</span>),
+  onLeave:     () => setActive(<span class="n">false</span>),
+  onEnterBack: () => setActive(<span class="n">true</span>),
+  onLeaveBack: () => setActive(<span class="n">false</span>),
+  onUpdate:    self => updateStandalone(self.progress)
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>ScrollTrigger.getAll() / kill</h3>
+    <p>Inspect all living ScrollTrigger instances and kill them all at once. Essential for SPA cleanup.</p>
+    <div class="stage" style="flex-direction:column; gap:8px;">
+      <div class="val-box" id="st-count">— instances</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">active ScrollTrigger instances</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="countSTs()">getAll().length</button>
+      <button class="btn" onclick="refreshSTs()">ScrollTrigger.refresh()</button>
+    </div>
+    <div class="code-snippet"><span class="k">ScrollTrigger</span>.getAll();          <span class="c">// array of all instances</span>
+<span class="k">ScrollTrigger</span>.getAll().length;     <span class="c">// count</span>
+<span class="k">ScrollTrigger</span>.getById(<span class="s">"my-id"</span>);   <span class="c">// find by id</span>
+<span class="k">ScrollTrigger</span>.refresh();           <span class="c">// recalculate all positions</span>
+<span class="k">ScrollTrigger</span>.getAll().forEach(t => t.kill()); <span class="c">// kill all</span></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  GSAP 3.15.0 · ScrollTrigger Demo · All core concepts covered<br />
+  <span style="color:var(--accent2)">gsap.com/docs/v3/Plugins/ScrollTrigger</span> · Built with GSAP CDN
+</footer>
+
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+// ── HERO ──────────────────────────────────────────────
+gsap.set('#hero-tag', { opacity: 0, y: -10 });
+gsap.set('#hero-title', { opacity: 0, y: 30 });
+gsap.set('#hero-desc', { opacity: 0, y: 20 });
+gsap.set('#scroll-hint', { opacity: 0 });
+
+const heroTl = gsap.timeline({ delay: 0.2 });
+heroTl
+  .to('#hero-tag',    { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' })
+  .to('#hero-title',  { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, '-=0.3')
+  .to('#hero-desc',   { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.4')
+  .to('#scroll-hint', { opacity: 1, duration: 0.4 }, '-=0.1');
+
+gsap.to('.scroll-arrow', { y: 8, duration: 0.8, ease: 'sine.inOut', repeat: -1, yoyo: true });
+
+// ── 01 BASIC ──────────────────────────────────────────
+gsap.from('#basic-box', {
+  x: -120, opacity: 0, scale: 0.5, rotation: -45, duration: 0.8,
+  ease: 'back.out(1.7)',
+  scrollTrigger: {
+    trigger: '#basic-box',
+    start: 'top 85%',
+    end: 'bottom 20%',
+    toggleActions: 'play none none reverse',
+    onEnter:     () => setDot('basic-dot', 'basic-status', true,  'entered — animation played'),
+    onLeaveBack: () => setDot('basic-dot', 'basic-status', false, 'left back — reversed'),
+    onLeave:     () => setDot('basic-dot', 'basic-status', false, 'scrolled past'),
+    onEnterBack: () => setDot('basic-dot', 'basic-status', true,  'entered back')
+  }
+});
+
+['a','b','c','d'].forEach((id, i) => {
+  const starts = ['top 90%','top 75%','top 60%','top 45%'];
+  gsap.from(`#pos-${id}`, {
+    opacity: 0, x: -60, duration: 0.7, ease: 'power2.out',
+    scrollTrigger: { trigger: `#pos-${id}`, start: starts[i], toggleActions: 'play none none reverse' }
+  });
+});
+
+gsap.from('#once-box', {
+  opacity: 0, scale: 0, rotation: 180, duration: 1, ease: 'elastic.out(1,0.5)',
+  scrollTrigger: {
+    trigger: '#once-box',
+    start: 'top 85%',
+    once: true,
+    onEnter: () => { setDot('once-dot', 'once-status', true, 'fired! ScrollTrigger killed itself'); }
+  }
+});
+
+// ── 02 SCRUB ──────────────────────────────────────────
+function updateScrubUI(n, p) {
+  document.getElementById(`scrub-fill-${n}`).style.width = (p * 100) + '%';
+  document.getElementById(`scrub-prog-${n}`).textContent = Math.round(p * 100) + '%';
+}
+
+gsap.to('#scrub-box-1', {
+  x: 200, rotation: 360, scale: 1.4, ease: 'none',
+  scrollTrigger: {
+    trigger: '#scrub-trigger-1',
+    start: 'top 70%', end: 'bottom 30%',
+    scrub: true,
+    onUpdate: self => updateScrubUI(1, self.progress)
+  }
+});
+
+gsap.to('#scrub-box-2', {
+  x: 200, borderRadius: '50%', backgroundColor: '#ff5c8a', ease: 'none',
+  scrollTrigger: {
+    trigger: '#scrub-trigger-2',
+    start: 'top 70%', end: 'bottom 30%',
+    scrub: 1,
+    onUpdate: self => updateScrubUI(2, self.progress)
+  }
+});
+
+// Parallax
+gsap.to('#pl-bg',  { y: -80, ease: 'none', scrollTrigger: { trigger: '#parallax-trigger', start: 'top bottom', end: 'bottom top', scrub: true } });
+gsap.to('#pl-mid', { y: -40, ease: 'none', scrollTrigger: { trigger: '#parallax-trigger', start: 'top bottom', end: 'bottom top', scrub: true } });
+gsap.to('#pl-fg',  { y: -10, ease: 'none', scrollTrigger: { trigger: '#parallax-trigger', start: 'top bottom', end: 'bottom top', scrub: true } });
+
+// ── 03 PIN ────────────────────────────────────────────
+function updatePinUI(p) {
+  document.getElementById('pin-bar-fill').style.width = (p * 100) + '%';
+  document.getElementById('pin-prog').textContent = Math.round(p * 100) + '%';
+  document.getElementById('pin-status').textContent = p < 0.01 ? 'scroll to pin this panel' : p > 0.99 ? 'pin released' : 'pinned — scrubbing…';
+}
+
+gsap.to('#pin-box', {
+  rotation: 360, scale: 1.5, backgroundColor: '#00e5c0',
+  ease: 'none',
+  scrollTrigger: {
+    trigger: '#pin-panel',
+    start: 'top top',
+    end: '+=500',
+    pin: true,
+    scrub: 1,
+    onUpdate: self => updatePinUI(self.progress)
+  }
+});
+
+// ── 04 TIMELINE ───────────────────────────────────────
+function updateTLUI(p) {
+  document.getElementById('tl-fill').style.width = (p * 100) + '%';
+  const step = Math.min(4, Math.ceil(p * 4));
+  document.getElementById('tl-prog').textContent = `step ${step}/4`;
+}
+
+const tlDemo = gsap.timeline({
+  scrollTrigger: {
+    trigger: '#tl-trigger',
+    start: 'top 70%', end: '+=600',
+    scrub: 1,
+    onUpdate: self => updateTLUI(self.progress)
+  }
+});
+tlDemo
+  .from('#tl-box-a', { opacity: 0, y: 40, duration: 1 })
+  .from('#tl-box-b', { opacity: 0, y: 40, duration: 1 }, '-=0.5')
+  .from('#tl-box-c', { opacity: 0, y: 40, duration: 1 }, '-=0.5')
+  .from('#tl-box-d', { opacity: 0, y: 40, duration: 1 }, '-=0.5');
+
+// Label timeline
+const labelTl = gsap.timeline({
+  scrollTrigger: {
+    trigger: '#label-trigger',
+    start: 'top 75%', end: '+=400',
+    scrub: 1,
+    onUpdate: self => {
+      const labels = ['enter','spin','exit'];
+      const prog = self.progress;
+      const label = prog < 0.33 ? 'enter' : prog < 0.66 ? 'spin' : 'exit';
+      document.getElementById('label-display').textContent = `label: "${label}"`;
+    }
+  }
+});
+labelTl.addLabel('enter')
+  .from('#label-box', { opacity: 0, scale: 0, duration: 1 })
+  .addLabel('spin')
+  .to('#label-box', { rotation: 360, duration: 1 })
+  .addLabel('exit')
+  .to('#label-box', { x: 100, opacity: 0.4, duration: 1 });
+
+// ── 05 BATCH ──────────────────────────────────────────
+function setupBatch() {
+  ScrollTrigger.batch('#batch-grid .batch-card', {
+    start: 'top 90%',
+    onEnter: elements => {
+      gsap.to(elements, { opacity: 1, y: 0, stagger: 0.08, duration: 0.6, ease: 'back.out(1.5)', overwrite: true });
+    },
+    onLeaveBack: elements => {
+      gsap.to(elements, { opacity: 0, y: 40, stagger: 0.04, duration: 0.4, overwrite: true });
+    }
+  });
+}
+setupBatch();
+
+function resetBatch() {
+  gsap.set('#batch-grid .batch-card', { opacity: 0, y: 40 });
+  ScrollTrigger.getAll().filter(t => t.vars.trigger && document.querySelector('#batch-grid')?.contains(t.vars.trigger)).forEach(t => t.kill());
+  setupBatch();
+  ScrollTrigger.refresh();
+}
+
+// ── 06 TOGGLECLASS ────────────────────────────────────
+['tc-1','tc-2','tc-3'].forEach(id => {
+  ScrollTrigger.create({
+    trigger: `#${id}`,
+    start: 'top 85%', end: 'bottom 15%',
+    toggleClass: { targets: `#${id}`, className: 'is-active' },
+    onEnter:     () => { document.getElementById(id).textContent = `${id.replace('tc-','Row ')} — is-active class ADDED`; },
+    onLeaveBack: () => { document.getElementById(id).textContent = `${id.replace('tc-','Row ')} — is-active class REMOVED`; },
+    onLeave:     () => { document.getElementById(id).textContent = `${id.replace('tc-','Row ')} — scrolled past`; },
+    onEnterBack: () => { document.getElementById(id).textContent = `${id.replace('tc-','Row ')} — is-active class ADDED`; }
+  });
+});
+
+// ── 07 CALLBACKS ──────────────────────────────────────
+const cbCounts = { enter: 0, leave: 0, enterback: 0, leaveback: 0 };
+
+function increment(key) {
+  cbCounts[key]++;
+  document.getElementById(`cb-${key}`).textContent = cbCounts[key];
+  gsap.from(`#cb-${key}`, { scale: 1.4, duration: 0.3, ease: 'back.out' });
+}
+
+ScrollTrigger.create({
+  trigger: '#cb-trigger',
+  start: 'top 70%', end: 'bottom 30%',
+  onEnter:     () => { increment('enter');     setDot('cb-dot','cb-status',true,'ACTIVE — inside zone'); },
+  onLeave:     () => { increment('leave');     setDot('cb-dot','cb-status',false,'left zone (scrolled past)'); },
+  onEnterBack: () => { increment('enterback'); setDot('cb-dot','cb-status',true,'ACTIVE — re-entered from below'); },
+  onLeaveBack: () => { increment('leaveback'); setDot('cb-dot','cb-status',false,'left zone (scrolled up)'); }
+});
+
+ScrollTrigger.create({
+  trigger: '#update-trigger',
+  start: 'top 75%', end: 'bottom 25%',
+  onUpdate: self => {
+    document.getElementById('upd-progress').textContent  = self.progress.toFixed(3);
+    document.getElementById('upd-direction').textContent = self.direction === 1 ? '↓ down' : '↑ up';
+    document.getElementById('upd-active').textContent    = self.isActive ? 'true' : 'false';
+  },
+  onEnter:     () => gsap.to('#update-box', { scale: 1.3, backgroundColor: '#7850ff', duration: 0.3 }),
+  onLeaveBack: () => gsap.to('#update-box', { scale: 1,   backgroundColor: '#ff5c8a', duration: 0.3 }),
+  onLeave:     () => gsap.to('#update-box', { scale: 1,   backgroundColor: '#ff5c8a', duration: 0.3 }),
+  onEnterBack: () => gsap.to('#update-box', { scale: 1.3, backgroundColor: '#7850ff', duration: 0.3 })
+});
+
+// ── 08 HORIZONTAL ─────────────────────────────────────
+function updatePanelNum(p) {
+  const panel = Math.min(4, Math.floor(p * 4) + 1);
+  document.getElementById('h-panel-num').textContent = `Panel ${panel} / 4`;
+}
+
+gsap.to('#h-track', {
+  xPercent: -75,
+  ease: 'none',
+  scrollTrigger: {
+    trigger: '#h-wrapper',
+    start: 'top top',
+    end: '+=2000',
+    scrub: 1,
+    pin: true,
+    onUpdate: self => updatePanelNum(self.progress)
+  }
+});
+
+// ── 09 SNAP ───────────────────────────────────────────
+function updateSnapUI(p) {
+  document.getElementById('snap-fill').style.width = (p * 100) + '%';
+  const step = Math.round(p * 4);
+  document.getElementById('snap-prog').textContent = `step ${step} / 4`;
+}
+
+gsap.to('#snap-box', {
+  x: 220, rotation: 360, ease: 'none',
+  scrollTrigger: {
+    trigger: '#snap-trigger',
+    start: 'top 70%', end: '+=600',
+    scrub: 0.5,
+    snap: { snapTo: 0.25, duration: 0.4, ease: 'power1.inOut' },
+    onUpdate: self => updateSnapUI(self.progress)
+  }
+});
+
+// ── 10 STANDALONE ─────────────────────────────────────
+function updateStandalone(p) {
+  document.getElementById('standalone-fill').style.width = (p * 100) + '%';
+  document.getElementById('standalone-prog').textContent = p.toFixed(3);
+}
+
+function setStandaloneActive(active) {
+  const el = document.getElementById('standalone-indicator');
+  const st = document.getElementById('standalone-status');
+  if (active) {
+    el.style.background = 'rgba(0,229,192,0.15)';
+    el.style.borderColor = 'var(--accent2)';
+    el.style.color = 'var(--accent2)';
+    el.textContent = 'ON';
+    st.textContent = 'inside zone';
+  } else {
+    el.style.background = 'var(--border)';
+    el.style.borderColor = 'var(--border)';
+    el.style.color = 'var(--muted)';
+    el.textContent = 'OFF';
+    st.textContent = 'outside zone';
+  }
+}
+
+ScrollTrigger.create({
+  trigger: '#standalone-trigger',
+  start: 'top 75%', end: 'bottom 25%',
+  onEnter:     () => setStandaloneActive(true),
+  onLeave:     () => setStandaloneActive(false),
+  onEnterBack: () => setStandaloneActive(true),
+  onLeaveBack: () => setStandaloneActive(false),
+  onUpdate:    self => updateStandalone(self.progress)
+});
+
+function countSTs() {
+  const count = ScrollTrigger.getAll().length;
+  document.getElementById('st-count').textContent = `${count} instances`;
+  gsap.from('#st-count', { scale: 1.2, duration: 0.3, ease: 'back.out' });
+}
+
+function refreshSTs() {
+  ScrollTrigger.refresh();
+  gsap.from('#st-count', { opacity: 0, duration: 0.3 });
+  document.getElementById('st-count').textContent = 'refreshed!';
+  setTimeout(() => countSTs(), 600);
+}
+
+// ── HELPERS ───────────────────────────────────────────
+function setDot(dotId, statusId, active, text) {
+  const dot = document.getElementById(dotId);
+  if (dot) {
+    dot.classList.toggle('active', active);
+  }
+  const status = document.getElementById(statusId);
+  if (status) status.textContent = text;
+}
+</script>
+</body>
+</html>

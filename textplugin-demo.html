@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSAP TextPlugin — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/TextPlugin.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+    --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+    --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+    --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,15,0.85); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border); padding: 0 2rem;
+    display: flex; align-items: center; height: 52px; overflow-x: auto;
+  }
+  nav a {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    text-decoration: none; padding: 0 14px; height: 52px;
+    display: flex; align-items: center; white-space: nowrap;
+    border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s;
+  }
+  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  main { padding-top: 52px; }
+  #hero {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.15) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent2); border: 1px solid rgba(0,229,192,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; opacity: 0; }
+  #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; opacity: 0; }
+  #hero h1 span { color: var(--accent); }
+  #hero p { font-size: 16px; color: var(--muted); max-width: 520px; margin-bottom: 3rem; opacity: 0; }
+  section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+  .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+  h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+  .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+  .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+  .demo-card:hover { border-color: var(--border-accent); }
+  .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+  .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+  .stage { background: var(--surface2); border-radius: 12px; padding: 2rem; min-height: 100px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 1rem; position: relative; overflow: hidden; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--accent); color: var(--text); background: rgba(120,80,255,0.1); }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+  .code-snippet .k { color: var(--accent); }
+  .code-snippet .s { color: var(--accent2); }
+  .code-snippet .n { color: var(--accent4); }
+
+  /* TEXT DISPLAYS */
+  .text-display {
+    font-family: var(--mono); font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 700;
+    color: var(--text); text-align: center; min-height: 2.5rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .text-display.sm { font-size: 1rem; }
+  .cursor-blink::after { content: '|'; color: var(--accent2); animation: blink 0.7s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* DELIMITER BUTTONS */
+  .delim-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+
+  /* SEQUENCE LOG */
+  .seq-log { font-family: var(--mono); font-size: 11px; color: var(--muted); background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-top: 0.75rem; min-height: 28px; }
+
+  /* MULTI */
+  .multi-line { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .multi-line .text-display { font-size: 1.1rem; justify-content: flex-start; }
+
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#basic">Basic Text</a>
+  <a href="#delimiter">Delimiter</a>
+  <a href="#typewriter">Typewriter</a>
+  <a href="#sequence">Sequence</a>
+  <a href="#multi">Multi-target</a>
+  <a href="#speed">Speed</a>
+</nav>
+
+<main>
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="tag" id="hero-tag">GSAP 3.15 · TextPlugin · Complete Demo</div>
+  <h1 id="hero-title">Text<br /><span>Plugin</span></h1>
+  <p id="hero-desc">Animate text content character-by-character or word-by-word. Build typewriter effects, sequenced reveals, and live text transitions.</p>
+</div>
+
+<!-- ── 01 BASIC ── -->
+<section id="basic">
+  <div class="section-label">01 — Basic</div>
+  <h2>gsap.to(el, { text: "…" })</h2>
+  <p class="section-desc">Set the text property to any string. GSAP replaces the element's innerText one character at a time over the duration.</p>
+
+  <div class="demo-card">
+    <h3>Basic text replacement</h3>
+    <p>The element's content animates character-by-character from the current value to the new one.</p>
+    <div class="stage">
+      <div class="text-display" id="basic-text">Hello, World!</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runBasic()">animate text</button>
+      <button class="btn" onclick="resetBasic()">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.registerPlugin(TextPlugin);
+
+<span class="k">gsap</span>.to(<span class="s">"#basic-text"</span>, {
+  duration: <span class="n">1.5</span>,
+  text: <span class="s">"Animated with TextPlugin!"</span>,
+  ease: <span class="s">"none"</span>
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>text: { value } — object form</h3>
+    <p>The object form gives you extra control. Set <code style="color:var(--accent2)">padSpace: true</code> to keep the element width stable during animation.</p>
+    <div class="stage">
+      <div class="text-display sm" id="obj-text" style="color:var(--accent4)">Loading system...</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runObj()">run</button>
+      <button class="btn" onclick="document.getElementById('obj-text').textContent='Loading system...'">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#obj-text"</span>, {
+  duration: <span class="n">2</span>,
+  text: {
+    value: <span class="s">"System ready. All processes nominal."</span>,
+    padSpace: <span class="n">true</span>   <span style="color:var(--muted)">// pads with spaces to keep width</span>
+  },
+  ease: <span class="s">"none"</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 02 DELIMITER ── -->
+<section id="delimiter">
+  <div class="section-label">02 — Delimiter</div>
+  <h2>delimiter — word-by-word</h2>
+  <p class="section-desc">By default text is revealed one character at a time. Set delimiter to " " to reveal word-by-word, or any other character.</p>
+
+  <div class="demo-card">
+    <h3>delimiter: " " — word-by-word</h3>
+    <p>Try different delimiters to change how the text is chunked during animation.</p>
+    <div class="stage" style="flex-direction:column; gap:1rem;">
+      <div class="delim-btns">
+        <button class="btn primary" onclick="runDelim('')">char-by-char</button>
+        <button class="btn primary" onclick="runDelim(' ')">word-by-word</button>
+        <button class="btn primary" onclick="runDelim(', ')">phrase-by-phrase</button>
+      </div>
+      <div class="text-display sm" id="delim-text" style="color:var(--accent2);">Choose a delimiter above</div>
+    </div>
+    <div class="seq-log" id="delim-log">waiting…</div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#delim-text"</span>, {
+  duration: <span class="n">3</span>,
+  text: {
+    value: <span class="s">"One small step, for a man, one giant leap"</span>,
+    delimiter: <span class="s">" "</span>   <span style="color:var(--muted)">// "" = char, " " = word, ", " = phrase</span>
+  },
+  ease: <span class="s">"none"</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 03 TYPEWRITER ── -->
+<section id="typewriter">
+  <div class="section-label">03 — Typewriter</div>
+  <h2>Typewriter cursor effect</h2>
+  <p class="section-desc">Combine TextPlugin with a blinking cursor pseudo-element to build a classic typewriter effect.</p>
+
+  <div class="demo-card">
+    <h3>Typewriter with blinking cursor</h3>
+    <p>The cursor blinks via CSS animation. Typing pauses using <code style="color:var(--accent2)">gsap.delayedCall()</code> between phrases.</p>
+    <div class="stage">
+      <div class="text-display cursor-blink" id="typewriter-text" style="color:var(--accent2); font-size:1.3rem;"></div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="startTypewriter()">start typing</button>
+      <button class="btn" onclick="stopTypewriter()">stop</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> phrases = [<span class="s">"Build animations."</span>, <span class="s">"Ship fast."</span>, <span class="s">"GSAP is magic."</span>];
+
+<span class="k">function</span> typeNext(i) {
+  <span class="k">gsap</span>.to(<span class="s">"#el"</span>, {
+    duration: phrases[i].length * <span class="n">0.07</span>,
+    text: { value: phrases[i], delimiter: <span class="s">""</span> },
+    ease: <span class="s">"none"</span>,
+    onComplete: () => <span class="k">gsap</span>.delayedCall(<span class="n">1.5</span>, () => {
+      <span class="k">gsap</span>.to(<span class="s">"#el"</span>, { duration: <span class="n">0.5</span>, text: <span class="s">""</span>, ease: <span class="s">"none"</span>,
+        onComplete: () => typeNext((i + <span class="n">1</span>) % phrases.length)
+      });
+    })
+  });
+}</div>
+  </div>
+</section>
+
+<!-- ── 04 SEQUENCE ── -->
+<section id="sequence">
+  <div class="section-label">04 — Sequence</div>
+  <h2>Timeline text sequences</h2>
+  <p class="section-desc">Add text tweens to a timeline to chain text changes with precise timing and overlaps.</p>
+
+  <div class="demo-card">
+    <h3>Timeline-driven text reveal</h3>
+    <p>Each text tween is placed in a timeline with a label. The whole sequence plays in order with controlled pauses.</p>
+    <div class="stage" style="flex-direction:column; gap:0.5rem;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">STATUS OUTPUT</div>
+      <div class="text-display" id="seq-text" style="color:var(--accent); font-size:1.1rem; min-height:2rem;"></div>
+      <div style="height:4px;background:var(--border);border-radius:2px;width:100%;margin-top:0.5rem;">
+        <div id="seq-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runSeq()">play sequence</button>
+      <button class="btn" onclick="seqTl&&seqTl.restart()">restart</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> tl = <span class="k">gsap</span>.timeline();
+tl.to(<span class="s">"#el"</span>, { duration: <span class="n">0.6</span>, text: <span class="s">"Connecting..."</span>, ease:<span class="s">"none"</span> })
+  .to(<span class="s">"#el"</span>, { duration: <span class="n">0.6</span>, text: <span class="s">"Authenticated."</span>, ease:<span class="s">"none"</span>, delay:<span class="n">0.8</span> })
+  .to(<span class="s">"#el"</span>, { duration: <span class="n">0.8</span>, text: <span class="s">"Loading modules..."</span>, ease:<span class="s">"none"</span> })
+  .to(<span class="s">"#el"</span>, { duration: <span class="n">1</span>,   text: <span class="s">"System online. Welcome back."</span>, ease:<span class="s">"none"</span>, delay:<span class="n">0.5</span> });</div>
+  </div>
+</section>
+
+<!-- ── 05 MULTI ── -->
+<section id="multi">
+  <div class="section-label">05 — Multi-target</div>
+  <h2>Multiple elements + stagger</h2>
+  <p class="section-desc">Use stagger with text tweens to reveal multiple elements one after another.</p>
+
+  <div class="demo-card">
+    <h3>Staggered multi-line reveal</h3>
+    <p>Each line reveals its text staggered 0.3s apart. Great for list reveals or code block animations.</p>
+    <div class="stage" style="align-items:flex-start; padding:1.5rem 2rem;">
+      <div class="multi-line">
+        <div class="text-display sm multi-item" style="color:var(--accent2);">—</div>
+        <div class="text-display sm multi-item" style="color:var(--accent4);">—</div>
+        <div class="text-display sm multi-item" style="color:var(--accent3);">—</div>
+        <div class="text-display sm multi-item" style="color:var(--accent);">—</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runMulti()">run stagger</button>
+      <button class="btn" onclick="resetMulti()">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> lines = [
+  <span class="s">"→ npm install gsap"</span>,
+  <span class="s">"→ import gsap from 'gsap'"</span>,
+  <span class="s">"→ gsap.registerPlugin(TextPlugin)"</span>,
+  <span class="s">"→ gsap.to('.el', { text: 'Hello!' })"</span>
+];
+<span class="k">gsap</span>.to(<span class="s">".multi-item"</span>, {
+  duration: <span class="n">0.8</span>,
+  text: (i) => ({ value: lines[i] }),
+  ease: <span class="s">"none"</span>,
+  stagger: <span class="n">0.4</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 06 SPEED ── -->
+<section id="speed">
+  <div class="section-label">06 — Speed Control</div>
+  <h2>speed — characters per second</h2>
+  <p class="section-desc">Instead of setting duration manually, use the speed property to define characters-per-second. Duration scales with text length automatically.</p>
+
+  <div class="demo-card">
+    <h3>text: { speed } — auto duration</h3>
+    <p>The tween duration is calculated as <code style="color:var(--accent2)">charCount / speed</code>. Longer texts take longer but maintain the same pace.</p>
+    <div class="stage" style="flex-direction:column; gap:1rem;">
+      <div class="text-display sm" id="speed-text" style="color:var(--accent); font-size:0.95rem; text-align:left; width:100%;"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn primary" onclick="runSpeed(20)">slow (20 cps)</button>
+        <button class="btn primary" onclick="runSpeed(60)">medium (60 cps)</button>
+        <button class="btn primary" onclick="runSpeed(150)">fast (150 cps)</button>
+      </div>
+    </div>
+    <div class="seq-log" id="speed-log">choose a speed above</div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#speed-text"</span>, {
+  text: {
+    value: <span class="s">"The quick brown fox jumps over the lazy dog."</span>,
+    speed: <span class="n">60</span>    <span style="color:var(--muted)">// 60 characters per second; duration = length / speed</span>
+  },
+  ease: <span class="s">"none"</span>
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>newClass — style mid-animation</h3>
+    <p>New characters are placed in a <code style="color:var(--accent2)">newClass</code> span that is removed when the tween completes. Style it with CSS for a highlight-as-you-type effect.</p>
+    <div class="stage">
+      <div class="text-display sm" id="newclass-text" style="font-size:1rem;"></div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runNewClass()">run</button>
+      <button class="btn" onclick="document.getElementById('newclass-text').textContent=''">reset</button>
+    </div>
+    <style>
+      .highlight-new { color: var(--accent4); text-shadow: 0 0 12px rgba(255,184,48,0.6); }
+    </style>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#newclass-text"</span>, {
+  duration: <span class="n">3</span>,
+  text: {
+    value: <span class="s">"New characters glow as they appear."</span>,
+    newClass: <span class="s">"highlight-new"</span>   <span style="color:var(--muted)">// applied to newly-typed chars</span>
+  },
+  ease: <span class="s">"none"</span>
+});</div>
+  </div>
+</section>
+</main>
+
+<footer>
+  GSAP 3.15.0 · TextPlugin Demo · <span style="color:var(--accent)">gsap.com/docs/v3/Plugins/TextPlugin</span>
+</footer>
+
+<script>
+gsap.registerPlugin(TextPlugin);
+
+// ── HERO ──
+gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+gsap.timeline({ delay: 0.3 })
+  .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+  .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+  .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+// ── 01 BASIC ──
+function runBasic() {
+  gsap.to('#basic-text', { duration: 1.5, text: 'Animated with TextPlugin!', ease: 'none' });
+}
+function resetBasic() {
+  gsap.to('#basic-text', { duration: 0.8, text: 'Hello, World!', ease: 'none' });
+}
+
+function runObj() {
+  gsap.to('#obj-text', { duration: 2, text: { value: 'System ready. All processes nominal.', padSpace: true }, ease: 'none' });
+}
+
+// ── 02 DELIMITER ──
+const delimPhrases = { '': 'OneSmallStepForAMan', ' ': 'One small step for a man', ', ': 'One, small step, for a man' };
+function runDelim(d) {
+  const value = 'One, small step, for a man, one giant leap for mankind.';
+  document.getElementById('delim-log').textContent = `delimiter: ${JSON.stringify(d) || '""'} — ${d === '' ? 'char-by-char' : d === ' ' ? 'word-by-word' : 'phrase-by-phrase'}`;
+  gsap.killTweensOf('#delim-text');
+  document.getElementById('delim-text').textContent = '';
+  gsap.to('#delim-text', { duration: 3, text: { value, delimiter: d }, ease: 'none' });
+}
+
+// ── 03 TYPEWRITER ──
+let twTimer, twActive = false;
+const phrases = ['Build animations.', 'Ship incredibly fast.', 'GSAP is pure magic.', 'Make the web move.'];
+let twIndex = 0;
+
+function typeNext() {
+  if (!twActive) return;
+  const phrase = phrases[twIndex];
+  gsap.to('#typewriter-text', {
+    duration: phrase.length * 0.06,
+    text: { value: phrase, delimiter: '' },
+    ease: 'none',
+    onComplete: () => {
+      if (!twActive) return;
+      twTimer = gsap.delayedCall(1.4, () => {
+        gsap.to('#typewriter-text', {
+          duration: 0.4,
+          text: '',
+          ease: 'none',
+          onComplete: () => {
+            twIndex = (twIndex + 1) % phrases.length;
+            gsap.delayedCall(0.3, typeNext);
+          }
+        });
+      });
+    }
+  });
+}
+function startTypewriter() { if (twActive) return; twActive = true; twIndex = 0; typeNext(); }
+function stopTypewriter() { twActive = false; gsap.killTweensOf('#typewriter-text'); if(twTimer) twTimer.kill(); }
+
+// ── 04 SEQUENCE ──
+let seqTl;
+const seqSteps = [
+  'Connecting to server…',
+  'Authenticated. Welcome.',
+  'Loading modules…',
+  'Compiling assets…',
+  'System online. All clear.'
+];
+function runSeq() {
+  if (seqTl) seqTl.kill();
+  document.getElementById('seq-text').textContent = '';
+  seqTl = gsap.timeline({
+    onUpdate() { document.getElementById('seq-bar').style.width = (seqTl.progress() * 100) + '%'; }
+  });
+  seqSteps.forEach((step, i) => {
+    seqTl.to('#seq-text', { duration: step.length * 0.04, text: { value: step }, ease: 'none' }, i === 0 ? 0 : '+=0.7');
+  });
+}
+
+// ── 05 MULTI ──
+const multiLines = [
+  '→ npm install gsap',
+  "→ import gsap from 'gsap'",
+  '→ gsap.registerPlugin(TextPlugin)',
+  "→ gsap.to('.el', { text: 'Hello!' })"
+];
+function runMulti() {
+  document.querySelectorAll('.multi-item').forEach(el => el.textContent = '—');
+  gsap.to('.multi-item', {
+    duration: 0.8,
+    text: (i) => ({ value: multiLines[i] }),
+    ease: 'none',
+    stagger: 0.4
+  });
+}
+function resetMulti() {
+  gsap.killTweensOf('.multi-item');
+  document.querySelectorAll('.multi-item').forEach(el => el.textContent = '—');
+}
+
+// ── 06 SPEED ──
+const speedText = 'The quick brown fox jumps over the lazy dog. Every character reveals at a consistent pace.';
+function runSpeed(spd) {
+  gsap.killTweensOf('#speed-text');
+  document.getElementById('speed-text').textContent = '';
+  document.getElementById('speed-log').textContent = `speed: ${spd} cps → duration ≈ ${(speedText.length / spd).toFixed(1)}s`;
+  gsap.to('#speed-text', { text: { value: speedText, speed: spd }, ease: 'none' });
+}
+
+function runNewClass() {
+  gsap.killTweensOf('#newclass-text');
+  document.getElementById('newclass-text').textContent = '';
+  gsap.to('#newclass-text', {
+    duration: 3,
+    text: { value: 'New characters glow amber as they appear on screen.', newClass: 'highlight-new' },
+    ease: 'none'
+  });
+}
+</script>
+</body>
+</html>

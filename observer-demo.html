@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSAP Observer — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/Observer.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+    --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+    --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+    --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+  nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  main { padding-top: 52px; }
+  #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+  .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.15) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent); border: 1px solid rgba(120,80,255,0.4); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; opacity: 0; }
+  #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; opacity: 0; }
+  #hero h1 span { color: var(--accent); }
+  #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; opacity: 0; }
+  section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+  .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+  h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+  .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+  .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+  .demo-card:hover { border-color: var(--border-accent); }
+  .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+  .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+  .stage { background: var(--surface2); border-radius: 12px; padding: 1.5rem; min-height: 160px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 1rem; position: relative; overflow: hidden; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--accent); color: var(--text); background: rgba(120,80,255,0.1); }
+  .btn.primary { border-color: var(--accent); color: var(--accent); }
+  .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+  .code-snippet .k { color: var(--accent); }
+  .code-snippet .s { color: var(--accent2); }
+  .code-snippet .n { color: var(--accent4); }
+
+  /* OBSERVER ZONE */
+  .obs-zone {
+    width: 100%; height: 200px; border-radius: 10px;
+    border: 2px dashed rgba(120,80,255,0.3); position: relative;
+    display: flex; align-items: center; justify-content: center;
+    cursor: default; user-select: none; touch-action: none;
+  }
+  .obs-zone-label { font-family: var(--mono); font-size: 9px; color: rgba(120,80,255,0.5); position: absolute; top: 8px; left: 12px; }
+
+  /* DIRECTION INDICATOR */
+  .dir-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; width: 120px; height: 120px; gap: 4px; }
+  .dir-cell { border-radius: 6px; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: background 0.15s, transform 0.15s; }
+  .dir-cell.active { background: rgba(120,80,255,0.4); transform: scale(1.1); }
+
+  /* VELOCITY METER */
+  .vel-bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin: 6px 0; }
+  .vel-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent2), var(--accent3)); border-radius: 4px; transition: width 0.1s; }
+
+  /* SLIDE DEMO */
+  .slide-container { width: 100%; height: 220px; position: relative; overflow: hidden; border-radius: 10px; }
+  .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; }
+  .slide-num { font-family: var(--mono); font-size: 4rem; font-weight: 700; line-height: 1; }
+  .slide-title { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; opacity: 0.6; }
+  .slide-dots { display: flex; gap: 8px; justify-content: center; margin-top: 0.75rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); cursor: pointer; transition: background 0.3s; }
+  .dot.active { background: var(--accent2); }
+
+  /* MOUSE TRACK */
+  .mouse-area { width: 100%; height: 200px; position: relative; border-radius: 10px; overflow: hidden; cursor: crosshair; }
+  .mouse-cursor { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); pointer-events: none; transform: translate(-50%,-50%); transition: opacity 0.3s; opacity: 0; }
+  .mouse-trail { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: rgba(120,80,255,0.4); pointer-events: none; transform: translate(-50%,-50%); }
+
+  /* EVENT LOG */
+  .event-log { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; max-height: 120px; overflow-y: auto; }
+  .log-entry { margin-bottom: 3px; }
+  .log-entry .ev-time { color: var(--muted); }
+  .log-entry .ev-type { }
+  .log-entry .ev-up { color: var(--accent2); }
+  .log-entry .ev-down { color: var(--accent3); }
+  .log-entry .ev-left { color: var(--accent4); }
+  .log-entry .ev-right { color: var(--accent); }
+
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#basic">Basic</a>
+  <a href="#direction">Direction</a>
+  <a href="#slides">Slide Nav</a>
+  <a href="#mouse">Mouse Track</a>
+  <a href="#tolerance">Tolerance</a>
+  <a href="#control">Control</a>
+</nav>
+
+<main>
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="tag" id="hero-tag">GSAP 3.15 · Observer · Demo</div>
+  <h1 id="hero-title">Ob<br /><span>server</span></h1>
+  <p id="hero-desc">Normalize pointer, touch, and scroll input into directional callbacks. Build swipe navigation, scroll hijacking, and gesture-driven UI without native scroll events.</p>
+</div>
+
+<!-- ── 01 BASIC ── -->
+<section id="basic">
+  <div class="section-label">01 — Basic</div>
+  <h2>Observer.create()</h2>
+  <p class="section-desc">Listen for up/down/left/right gestures on any element. Works with mouse wheel, touch swipes, and pointer drag uniformly.</p>
+
+  <div class="demo-card">
+    <h3>onUp / onDown / onLeft / onRight</h3>
+    <p>Interact inside the zone below — scroll, swipe, or drag in any direction.</p>
+    <div class="stage" style="flex-direction:column; gap:1rem;">
+      <div class="obs-zone" id="basic-zone">
+        <div class="obs-zone-label">observer target — scroll / swipe / drag here</div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:2rem;font-weight:700;" id="basic-dir">—</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;" id="basic-count">waiting for gesture</div>
+        </div>
+      </div>
+    </div>
+    <div class="event-log" id="basic-log"></div>
+    <div class="code-snippet"><span class="k">Observer</span>.create({
+  target: <span class="s">"#zone"</span>,
+  type: <span class="s">"wheel,touch,pointer"</span>,
+  onUp:    () => show(<span class="s">"↑ up"</span>),
+  onDown:  () => show(<span class="s">"↓ down"</span>),
+  onLeft:  () => show(<span class="s">"← left"</span>),
+  onRight: () => show(<span class="s">"→ right"</span>),
+  tolerance: <span class="n">10</span>    <span style="color:var(--muted)">// pixels before direction fires</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 02 DIRECTION ── -->
+<section id="direction">
+  <div class="section-label">02 — Direction Grid</div>
+  <h2>Visual direction indicator</h2>
+  <p class="section-desc">The Observer callbacks update a direction indicator in real time. Each callback also receives the Observer instance with deltaX, deltaY, velocityX, velocityY.</p>
+
+  <div class="demo-card">
+    <h3>Direction + velocity readout</h3>
+    <p>Scroll or drag inside the zone. The grid highlights the detected direction and bars show velocity.</p>
+    <div class="stage" style="gap:2rem; flex-wrap:wrap;">
+      <div class="obs-zone" id="dir-zone" style="flex:1; min-width:200px;">
+        <div class="obs-zone-label">gesture zone</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">scroll / swipe / drag</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem;align-items:center;">
+        <div class="dir-grid">
+          <div></div>
+          <div class="dir-cell" id="dir-up">↑</div>
+          <div></div>
+          <div class="dir-cell" id="dir-left">←</div>
+          <div class="dir-cell" style="background:rgba(120,80,255,0.1);font-size:0.6rem;color:var(--muted);">●</div>
+          <div class="dir-cell" id="dir-right">→</div>
+          <div></div>
+          <div class="dir-cell" id="dir-down">↓</div>
+          <div></div>
+        </div>
+        <div style="width:140px;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);">velocity X</div>
+          <div class="vel-bar"><div class="vel-fill" id="vel-x"></div></div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);">velocity Y</div>
+          <div class="vel-bar"><div class="vel-fill" id="vel-y"></div></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--accent2);margin-top:4px;" id="vel-vals">vx: 0 · vy: 0</div>
+        </div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">Observer</span>.create({
+  target: <span class="s">"#dir-zone"</span>,
+  onUp:    self => flash(<span class="s">"up"</span>,    self.velocityY),
+  onDown:  self => flash(<span class="s">"down"</span>,  self.velocityY),
+  onLeft:  self => flash(<span class="s">"left"</span>,  self.velocityX),
+  onRight: self => flash(<span class="s">"right"</span>, self.velocityX),
+  onMove:  self => updateVelocity(self.velocityX, self.velocityY)
+});</div>
+  </div>
+</section>
+
+<!-- ── 03 SLIDES ── -->
+<section id="slides">
+  <div class="section-label">03 — Slide Navigation</div>
+  <h2>Full-section slide navigation</h2>
+  <p class="section-desc">Observer is ideal for hijacking scroll to drive a slide-by-slide experience. Each gesture advances exactly one slide, regardless of scroll speed.</p>
+
+  <div class="demo-card">
+    <h3>Scroll / swipe to navigate slides</h3>
+    <p>Each up/down gesture transitions one slide. Animations lock until the transition finishes.</p>
+    <div class="slide-container" id="slide-container">
+      <div class="slide" id="slide-0" style="background:linear-gradient(135deg,rgba(120,80,255,0.15),transparent); transform:translateY(0%);">
+        <div class="slide-num" style="color:var(--accent);">01</div>
+        <div class="slide-title" style="color:var(--accent);">INTRODUCTION</div>
+      </div>
+      <div class="slide" id="slide-1" style="background:linear-gradient(135deg,rgba(0,229,192,0.15),transparent); transform:translateY(100%);">
+        <div class="slide-num" style="color:var(--accent2);">02</div>
+        <div class="slide-title" style="color:var(--accent2);">FEATURES</div>
+      </div>
+      <div class="slide" id="slide-2" style="background:linear-gradient(135deg,rgba(255,92,138,0.15),transparent); transform:translateY(100%);">
+        <div class="slide-num" style="color:var(--accent3);">03</div>
+        <div class="slide-title" style="color:var(--accent3);">RESULTS</div>
+      </div>
+      <div class="slide" id="slide-3" style="background:linear-gradient(135deg,rgba(255,184,48,0.15),transparent); transform:translateY(100%);">
+        <div class="slide-num" style="color:var(--accent4);">04</div>
+        <div class="slide-title" style="color:var(--accent4);">CONCLUSION</div>
+      </div>
+    </div>
+    <div class="slide-dots" id="slide-dots"></div>
+    <div class="code-snippet"><span class="k">let</span> current = <span class="n">0</span>, animating = <span class="n">false</span>;
+<span class="k">Observer</span>.create({
+  target: <span class="s">"#slide-container"</span>,
+  type: <span class="s">"wheel,touch,pointer"</span>,
+  onDown: () => !animating && goTo(current + <span class="n">1</span>),  <span style="color:var(--muted)">// scroll down → next</span>
+  onUp:   () => !animating && goTo(current - <span class="n">1</span>),  <span style="color:var(--muted)">// scroll up → prev</span>
+  preventDefault: <span class="n">true</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 04 MOUSE ── -->
+<section id="mouse">
+  <div class="section-label">04 — Mouse / Pointer</div>
+  <h2>onMove — track pointer position</h2>
+  <p class="section-desc">Observer.create() with onMove tracks the pointer. Use event.x/y for position inside the target element.</p>
+
+  <div class="demo-card">
+    <h3>Pointer trail effect</h3>
+    <p>Move your mouse or touch inside the area. Observer's onMove callback drives a trailing cursor.</p>
+    <div class="stage" style="padding:0;">
+      <div class="mouse-area" id="mouse-area">
+        <div class="mouse-cursor" id="mouse-cursor"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:0.75rem;flex-wrap:wrap;">
+      <div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">x</div><div style="font-family:var(--mono);font-size:12px;color:var(--accent2)" id="mx">—</div></div>
+      <div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">y</div><div style="font-family:var(--mono);font-size:12px;color:var(--accent2)" id="my">—</div></div>
+      <div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">velocityX</div><div style="font-family:var(--mono);font-size:12px;color:var(--accent2)" id="mvx">—</div></div>
+      <div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">velocityY</div><div style="font-family:var(--mono);font-size:12px;color:var(--accent2)" id="mvy">—</div></div>
+    </div>
+    <div class="code-snippet"><span class="k">Observer</span>.create({
+  target: <span class="s">"#mouse-area"</span>,
+  type: <span class="s">"pointer"</span>,
+  onMove: self => {
+    <span class="k">gsap</span>.to(<span class="s">"#cursor"</span>, { x: self.x, y: self.y, duration: <span class="n">0.15</span>, ease: <span class="s">"power2.out"</span> });
+    updateCoords(self.x, self.y, self.velocityX, self.velocityY);
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ── 05 TOLERANCE ── -->
+<section id="tolerance">
+  <div class="section-label">05 — Tolerance</div>
+  <h2>tolerance — gesture threshold</h2>
+  <p class="section-desc">Tolerance sets how many pixels of movement must occur before a direction is fired. Higher = less sensitive. Useful to prevent accidental triggers.</p>
+
+  <div class="demo-card">
+    <h3>Compare tolerance values</h3>
+    <p>Scroll or drag inside each zone and see how sensitivity differs.</p>
+    <div class="stage" style="gap:12px; align-items:stretch; flex-direction:column;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;">tolerance: 5 (sensitive)</div>
+          <div class="obs-zone" id="tol-low" style="height:100px;">
+            <div style="font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--accent2);" id="tol-low-count">0</div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;">tolerance: 80 (resistant)</div>
+          <div class="obs-zone" id="tol-high" style="height:100px;">
+            <div style="font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--accent3);" id="tol-high-count">0</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;">gesture count — scroll or swipe inside each zone</div>
+    </div>
+    <div class="code-snippet"><span class="k">Observer</span>.create({ target: <span class="s">"#tol-low"</span>,  tolerance: <span class="n">5</span>  }); <span style="color:var(--muted)">// fires often</span>
+<span class="k">Observer</span>.create({ target: <span class="s">"#tol-high"</span>, tolerance: <span class="n">80</span> }); <span style="color:var(--muted)">// needs large gesture</span></div>
+  </div>
+</section>
+
+<!-- ── 06 CONTROL ── -->
+<section id="control">
+  <div class="section-label">06 — Control</div>
+  <h2>enable / disable / kill</h2>
+  <p class="section-desc">Observer instances can be paused and re-enabled at any time. Use this to lock interactions during animations.</p>
+
+  <div class="demo-card">
+    <h3>Observer.create() returns a controllable instance</h3>
+    <p>Toggle the observer on and off. Notice the event log stops when disabled.</p>
+    <div class="stage">
+      <div class="obs-zone" id="ctrl-zone" style="flex:1; height:120px;">
+        <div class="obs-zone-label" id="ctrl-zone-label">observer: enabled</div>
+        <div style="font-family:var(--mono);font-size:1.5rem;font-weight:700;" id="ctrl-dir">—</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="ctrlObserver.enable(); document.getElementById('ctrl-zone-label').textContent='observer: enabled'; document.getElementById('ctrl-zone').style.borderColor='rgba(120,80,255,0.4)'">enable</button>
+      <button class="btn" onclick="ctrlObserver.disable(); document.getElementById('ctrl-zone-label').textContent='observer: DISABLED'; document.getElementById('ctrl-zone').style.borderColor='rgba(255,255,255,0.06)'">disable</button>
+      <button class="btn" onclick="ctrlObserver.kill(); document.getElementById('ctrl-zone-label').textContent='observer: killed'">kill</button>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> obs = <span class="k">Observer</span>.create({ target: <span class="s">"#ctrl-zone"</span>, ... });
+obs.disable();   <span style="color:var(--muted)">// pauses — no callbacks fire</span>
+obs.enable();    <span style="color:var(--muted)">// re-activates</span>
+obs.kill();      <span style="color:var(--muted)">// removes completely</span></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  GSAP 3.15.0 · Observer · <span style="color:var(--accent)">gsap.com/docs/v3/Plugins/Observer</span>
+</footer>
+
+<script>
+gsap.registerPlugin(Observer);
+
+// ── HERO ──
+gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+gsap.timeline({ delay: 0.3 })
+  .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+  .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+  .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+// ── 01 BASIC ──
+let basicCount = 0;
+const basicLog = document.getElementById('basic-log');
+
+function logEvent(dir, color) {
+  basicCount++;
+  document.getElementById('basic-dir').textContent = dir;
+  document.getElementById('basic-count').textContent = `${basicCount} gesture${basicCount !== 1 ? 's' : ''}`;
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  const now = new Date();
+  entry.innerHTML = `<span class="ev-time">${now.toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>  <span style="color:${color}">${dir}</span>`;
+  basicLog.prepend(entry);
+  if (basicLog.children.length > 8) basicLog.lastChild.remove();
+}
+
+Observer.create({
+  target: '#basic-zone',
+  type: 'wheel,touch,pointer',
+  onUp:    () => logEvent('↑ UP',    'var(--accent2)'),
+  onDown:  () => logEvent('↓ DOWN',  'var(--accent3)'),
+  onLeft:  () => logEvent('← LEFT',  'var(--accent4)'),
+  onRight: () => logEvent('→ RIGHT', 'var(--accent)'),
+  tolerance: 10
+});
+
+// ── 02 DIRECTION ──
+function flashDir(id) {
+  const el = document.getElementById('dir-' + id);
+  el.classList.add('active');
+  gsap.delayedCall(0.3, () => el.classList.remove('active'));
+}
+
+Observer.create({
+  target: '#dir-zone',
+  type: 'wheel,touch,pointer',
+  onUp:    self => { flashDir('up');    updateVel(self); },
+  onDown:  self => { flashDir('down');  updateVel(self); },
+  onLeft:  self => { flashDir('left');  updateVel(self); },
+  onRight: self => { flashDir('right'); updateVel(self); },
+  onMove:  self => updateVel(self),
+  tolerance: 10
+});
+
+function updateVel(self) {
+  const vx = Math.abs(self.velocityX || 0);
+  const vy = Math.abs(self.velocityY || 0);
+  const maxV = 800;
+  document.getElementById('vel-x').style.width = Math.min(100, vx / maxV * 100) + '%';
+  document.getElementById('vel-y').style.width = Math.min(100, vy / maxV * 100) + '%';
+  document.getElementById('vel-vals').textContent = `vx: ${Math.round(vx)} · vy: ${Math.round(vy)}`;
+}
+
+// ── 03 SLIDES ──
+const slides = document.querySelectorAll('.slide');
+const dotsContainer = document.getElementById('slide-dots');
+let currentSlide = 0;
+let slideAnimating = false;
+
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (i === 0 ? ' active' : '');
+  dot.onclick = () => !slideAnimating && goToSlide(i);
+  dotsContainer.appendChild(dot);
+});
+
+function goToSlide(next) {
+  if (next < 0 || next >= slides.length || next === currentSlide) return;
+  slideAnimating = true;
+  const dir = next > currentSlide ? 1 : -1;
+  const tl = gsap.timeline({ onComplete: () => slideAnimating = false });
+  tl.to(slides[currentSlide], { y: -100 * dir + '%', duration: 0.6, ease: 'power2.inOut' })
+    .fromTo(slides[next], { y: 100 * dir + '%' }, { y: '0%', duration: 0.6, ease: 'power2.inOut' }, 0);
+  dotsContainer.children[currentSlide].classList.remove('active');
+  dotsContainer.children[next].classList.add('active');
+  currentSlide = next;
+}
+
+Observer.create({
+  target: '#slide-container',
+  type: 'wheel,touch,pointer',
+  onDown: () => !slideAnimating && goToSlide(currentSlide + 1),
+  onUp:   () => !slideAnimating && goToSlide(currentSlide - 1),
+  preventDefault: true,
+  tolerance: 20
+});
+
+// ── 04 MOUSE ──
+const mouseArea = document.getElementById('mouse-area');
+const mouseCursor = document.getElementById('mouse-cursor');
+
+Observer.create({
+  target: '#mouse-area',
+  type: 'pointer',
+  onHover: self => { gsap.to(mouseCursor, { opacity: 1, duration: 0.2 }); },
+  onHoverEnd: self => { gsap.to(mouseCursor, { opacity: 0, duration: 0.2 }); },
+  onMove: self => {
+    const rect = mouseArea.getBoundingClientRect();
+    const x = self.event.clientX - rect.left;
+    const y = self.event.clientY - rect.top;
+    gsap.to(mouseCursor, { x, y, duration: 0.15, ease: 'power2.out' });
+
+    // Spawn a trail dot
+    const trail = document.createElement('div');
+    trail.className = 'mouse-trail';
+    trail.style.left = x + 'px'; trail.style.top = y + 'px';
+    mouseArea.appendChild(trail);
+    gsap.to(trail, { opacity: 0, scale: 0, duration: 0.5, onComplete: () => trail.remove() });
+
+    document.getElementById('mx').textContent  = Math.round(x);
+    document.getElementById('my').textContent  = Math.round(y);
+    document.getElementById('mvx').textContent = Math.round(self.velocityX || 0);
+    document.getElementById('mvy').textContent = Math.round(self.velocityY || 0);
+  }
+});
+
+// ── 05 TOLERANCE ──
+let tolLow = 0, tolHigh = 0;
+const dirs = ['onUp','onDown','onLeft','onRight'];
+const makeDirObj = (fn) => Object.fromEntries(dirs.map(d => [d, fn]));
+
+Observer.create({ target: '#tol-low', tolerance: 5,  ...makeDirObj(() => { document.getElementById('tol-low-count').textContent = ++tolLow; }) });
+Observer.create({ target: '#tol-high', tolerance: 80, ...makeDirObj(() => { document.getElementById('tol-high-count').textContent = ++tolHigh; }) });
+
+// ── 06 CONTROL ──
+const ctrlObserver = Observer.create({
+  target: '#ctrl-zone',
+  type: 'wheel,touch,pointer',
+  onUp:    () => { document.getElementById('ctrl-dir').textContent = '↑'; flash(); },
+  onDown:  () => { document.getElementById('ctrl-dir').textContent = '↓'; flash(); },
+  onLeft:  () => { document.getElementById('ctrl-dir').textContent = '←'; flash(); },
+  onRight: () => { document.getElementById('ctrl-dir').textContent = '→'; flash(); },
+  tolerance: 10
+});
+
+function flash() {
+  gsap.fromTo('#ctrl-dir', { scale: 1.5, color: 'var(--accent2)' }, { scale: 1, color: 'var(--text)', duration: 0.4, ease: 'back.out' });
+}
+</script>
+</body>
+</html>

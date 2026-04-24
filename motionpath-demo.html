@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSAP MotionPathPlugin — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/MotionPathPlugin.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+    --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+    --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+    --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+  nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  main { padding-top: 52px; }
+  #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+  .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,184,48,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; opacity: 0; }
+  #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; opacity: 0; }
+  #hero h1 span { color: var(--accent4); }
+  #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; opacity: 0; }
+  section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+  .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+  h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+  .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+  .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+  .demo-card:hover { border-color: var(--border-accent); }
+  .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+  .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+  .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+  .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+  .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+  .code-snippet .k { color: var(--accent); }
+  .code-snippet .s { color: var(--accent2); }
+  .code-snippet .n { color: var(--accent4); }
+
+  /* SVG STAGE */
+  .svg-stage { width: 100%; position: relative; }
+  .svg-stage svg { width: 100%; height: auto; display: block; border-radius: 10px; background: rgba(0,0,0,0.2); }
+
+  /* DOT */
+  .mp-dot { width: 20px; height: 20px; border-radius: 50%; background: var(--accent4); position: absolute; top: 0; left: 0; pointer-events: none; box-shadow: 0 0 10px rgba(255,184,48,0.5); }
+  .mp-dot.teal { background: var(--accent2); box-shadow: 0 0 10px rgba(0,229,192,0.5); }
+  .mp-dot.pink { background: var(--accent3); box-shadow: 0 0 10px rgba(255,92,138,0.5); }
+  .mp-dot.purple { background: var(--accent); box-shadow: 0 0 10px rgba(120,80,255,0.5); }
+
+  /* ARROW marker in SVG */
+  .path-arrow { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ROCKET ICON */
+  .rocket { font-size: 1.5rem; position: absolute; top: 0; left: 0; pointer-events: none; line-height: 1; }
+
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#basic">Basic</a>
+  <a href="#autorotate">autoRotate</a>
+  <a href="#align">align</a>
+  <a href="#multiple">Multiple</a>
+  <a href="#loop">Loop</a>
+  <a href="#rawpath">Raw Path</a>
+</nav>
+
+<main>
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="tag" id="hero-tag">GSAP 3.15 · MotionPathPlugin · Demo</div>
+  <h1 id="hero-title">Motion<br /><span>Path</span></h1>
+  <p id="hero-desc">Animate any element along an SVG path. Align to path, auto-rotate with the curve, and run multiple objects with stagger.</p>
+</div>
+
+<!-- ── 01 BASIC ── -->
+<section id="basic">
+  <div class="section-label">01 — Basic</div>
+  <h2>motionPath: { path }</h2>
+  <p class="section-desc">Pass any SVG path element or selector. GSAP moves the target along the path over the duration.</p>
+
+  <div class="demo-card">
+    <h3>Animate along a wave path</h3>
+    <p>The dot follows the SVG path. The path is visible as a guide — you can hide it in production.</p>
+    <div class="stage">
+      <div class="svg-stage" style="position:relative;">
+        <svg viewBox="0 0 800 200" id="wave-svg">
+          <path id="wave-path" d="M 20,100 C 100,20 200,180 300,100 S 500,20 600,100 S 750,180 780,100"
+            fill="none" stroke="rgba(255,184,48,0.2)" stroke-width="2" stroke-dasharray="6,6"/>
+        </svg>
+        <div class="mp-dot" id="wave-dot"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runWave()">animate</button>
+      <button class="btn" onclick="waveTween&&waveTween.restart()">restart</button>
+      <button class="btn" onclick="waveTween&&waveTween.pause()">pause</button>
+      <button class="btn" onclick="waveTween&&waveTween.resume()">resume</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.registerPlugin(MotionPathPlugin);
+
+<span class="k">gsap</span>.to(<span class="s">"#dot"</span>, {
+  duration: <span class="n">3</span>,
+  ease: <span class="s">"none"</span>,
+  motionPath: {
+    path: <span class="s">"#wave-path"</span>,
+    align: <span class="s">"#wave-path"</span>,
+    alignOrigin: [<span class="n">0.5</span>, <span class="n">0.5</span>]
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ── 02 AUTOROTATE ── -->
+<section id="autorotate">
+  <div class="section-label">02 — autoRotate</div>
+  <h2>autoRotate — follow the curve</h2>
+  <p class="section-desc">autoRotate: true makes the element rotate to face its direction of travel. Use a number to add a rotation offset (e.g. 90 for a side-facing element).</p>
+
+  <div class="demo-card">
+    <h3>Rocket following a looping path</h3>
+    <p>With autoRotate, the rocket faces the direction it's moving at all times.</p>
+    <div class="stage">
+      <div class="svg-stage" style="position:relative;">
+        <svg viewBox="0 0 800 220" id="loop-svg">
+          <path id="loop-path" d="M 400,110 C 560,20 760,60 760,110 S 560,200 400,110 S 240,20 40,110 S 240,200 400,110 Z"
+            fill="none" stroke="rgba(255,92,138,0.2)" stroke-width="2" stroke-dasharray="6,6"/>
+        </svg>
+        <div class="rocket" id="rocket-dot">🚀</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runRocket()">launch!</button>
+      <button class="btn" onclick="rocketTween&&rocketTween.pause()">pause</button>
+      <button class="btn" onclick="rocketTween&&rocketTween.resume()">resume</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#rocket"</span>, {
+  duration: <span class="n">5</span>, repeat: -<span class="n">1</span>, ease: <span class="s">"none"</span>,
+  motionPath: {
+    path: <span class="s">"#loop-path"</span>,
+    align: <span class="s">"#loop-path"</span>,
+    alignOrigin: [<span class="n">0.5</span>, <span class="n">0.5</span>],
+    autoRotate: <span class="n">true</span>    <span style="color:var(--muted)">// rotate to face direction of travel</span>
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ── 03 ALIGN ── -->
+<section id="align">
+  <div class="section-label">03 — Align</div>
+  <h2>align + alignOrigin</h2>
+  <p class="section-desc">align registers the element's position relative to the path in the SVG coordinate system. alignOrigin [x,y] controls which point of the element tracks the path (0,0 = top-left; 0.5,0.5 = center; 1,1 = bottom-right).</p>
+
+  <div class="demo-card">
+    <h3>alignOrigin comparison</h3>
+    <p>Three dots on the same circular path with different alignOrigin values.</p>
+    <div class="stage">
+      <div class="svg-stage" style="position:relative;">
+        <svg viewBox="0 0 800 200" id="align-svg">
+          <circle id="circle-path" cx="400" cy="100" r="80" fill="none" stroke="rgba(120,80,255,0.25)" stroke-width="2" stroke-dasharray="5,5"/>
+        </svg>
+        <div class="mp-dot" id="ao-center" style="width:20px;height:20px;" title="center 0.5,0.5"></div>
+        <div class="mp-dot teal" id="ao-tl" style="width:20px;height:20px;" title="top-left 0,0"></div>
+        <div class="mp-dot pink" id="ao-br" style="width:20px;height:20px;" title="bottom-right 1,1"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:0.5rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--accent4)"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent4);"></div>[0.5,0.5] center</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--accent2)"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent2);"></div>[0,0] top-left</div>
+      <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--accent3)"><div style="width:10px;height:10px;border-radius:50%;background:var(--accent3);"></div>[1,1] bottom-right</div>
+    </div>
+    <div class="controls" style="margin-top:0.75rem;">
+      <button class="btn primary" onclick="runAlign()">run</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#dot"</span>, {
+  motionPath: { path: <span class="s">"#circle-path"</span>, align: <span class="s">"#circle-path"</span>, alignOrigin: [<span class="n">0.5</span>, <span class="n">0.5</span>] },
+  duration: <span class="n">3</span>, repeat: -<span class="n">1</span>, ease: <span class="s">"none"</span>
+});
+<span class="c">// alignOrigin[0] = x (0=left, 1=right)
+// alignOrigin[1] = y (0=top, 1=bottom)</span></div>
+  </div>
+</section>
+
+<!-- ── 04 MULTIPLE ── -->
+<section id="multiple">
+  <div class="section-label">04 — Multiple Objects</div>
+  <h2>Staggered convoy</h2>
+  <p class="section-desc">Animate multiple objects on the same path with stagger. Each starts at a different time, creating a convoy effect.</p>
+
+  <div class="demo-card">
+    <h3>Stagger on a shared path</h3>
+    <p>Five dots animate along the same path with 0.3s stagger. All share one tween call.</p>
+    <div class="stage">
+      <div class="svg-stage" style="position:relative;">
+        <svg viewBox="0 0 800 160" id="convoy-svg">
+          <path id="convoy-path" d="M 20,80 C 100,20 180,140 280,80 S 440,20 520,80 S 660,140 780,80"
+            fill="none" stroke="rgba(0,229,192,0.2)" stroke-width="2" stroke-dasharray="6,6"/>
+        </svg>
+        <div class="mp-dot" id="c1" style="background:var(--accent)"></div>
+        <div class="mp-dot" id="c2" style="background:var(--accent3)"></div>
+        <div class="mp-dot" id="c3" style="background:var(--accent2);color:#0a0a0f"></div>
+        <div class="mp-dot" id="c4" style="background:var(--accent4);color:#0a0a0f"></div>
+        <div class="mp-dot" id="c5" style="background:#c87cff"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runConvoy()">run convoy</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to([<span class="s">"#c1"</span>,<span class="s">"#c2"</span>,<span class="s">"#c3"</span>,<span class="s">"#c4"</span>,<span class="s">"#c5"</span>], {
+  duration: <span class="n">3</span>, ease: <span class="s">"power1.inOut"</span>,
+  stagger: <span class="n">0.3</span>,   <span style="color:var(--muted)">// each starts 0.3s after the previous</span>
+  motionPath: {
+    path: <span class="s">"#convoy-path"</span>,
+    align: <span class="s">"#convoy-path"</span>,
+    alignOrigin: [<span class="n">0.5</span>, <span class="n">0.5</span>],
+    autoRotate: <span class="n">true</span>
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ── 05 LOOP ── -->
+<section id="loop">
+  <div class="section-label">05 — Loop</div>
+  <h2>repeat: -1 — infinite loop</h2>
+  <p class="section-desc">Set repeat: -1 with ease: "none" for a smooth perpetual loop. The path must close (end at start) for seamless looping.</p>
+
+  <div class="demo-card">
+    <h3>Satellite orbit — infinite loop</h3>
+    <p>The satellite loops the elliptical orbit forever. timeScale slider controls speed.</p>
+    <div class="stage">
+      <div class="svg-stage" style="position:relative;">
+        <svg viewBox="0 0 800 220" id="orbit-svg">
+          <ellipse id="orbit-path-el" cx="400" cy="110" rx="340" ry="80" fill="none" stroke="rgba(120,80,255,0.2)" stroke-width="2" stroke-dasharray="5,5"/>
+          <!-- Planet -->
+          <circle cx="400" cy="110" r="28" fill="rgba(120,80,255,0.2)" stroke="rgba(120,80,255,0.4)" stroke-width="2"/>
+          <text x="400" y="115" text-anchor="middle" fill="rgba(120,80,255,0.8)" font-size="14" font-family="sans-serif">🌍</text>
+        </svg>
+        <div class="mp-dot" id="satellite" style="width:24px;height:24px;border-radius:0;background:transparent;font-size:1.2rem;line-height:1;">🛸</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:0.75rem;flex-wrap:wrap;">
+      <label style="font-family:var(--mono);font-size:11px;color:var(--muted);">speed</label>
+      <input type="range" min="1" max="40" value="10" oninput="setOrbitSpeed(this.value)" style="flex:1;accent-color:var(--accent4);" />
+      <span style="font-family:var(--mono);font-size:11px;color:var(--accent4);" id="orbit-speed">1.0×</span>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> tween = <span class="k">gsap</span>.to(<span class="s">"#satellite"</span>, {
+  duration: <span class="n">6</span>, repeat: -<span class="n">1</span>, ease: <span class="s">"none"</span>,
+  motionPath: {
+    path: <span class="s">"#orbit-path-el"</span>, align: <span class="s">"#orbit-path-el"</span>,
+    alignOrigin: [<span class="n">0.5</span>, <span class="n">0.5</span>], autoRotate: <span class="n">false</span>
+  }
+});
+tween.timeScale(<span class="n">2</span>); <span style="color:var(--muted)">// speed up</span></div>
+  </div>
+</section>
+
+<!-- ── 06 RAWPATH ── -->
+<section id="rawpath">
+  <div class="section-label">06 — Raw Path Data</div>
+  <h2>path: "M…" — inline path string</h2>
+  <p class="section-desc">Instead of an SVG element reference, pass raw SVG path data as a string. Useful for programmatically generated paths.</p>
+
+  <div class="demo-card">
+    <h3>Path data string — no SVG element needed</h3>
+    <p>MotionPath accepts the path <code style="color:var(--accent2)">d</code> attribute value directly as a string. The element doesn't need to be in the DOM.</p>
+    <div class="stage" style="min-height:180px; position:relative;">
+      <div class="mp-dot purple" id="raw-dot" style="position:absolute;top:50%;left:50%;"></div>
+      <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" viewBox="0 0 800 200" id="raw-svg" preserveAspectRatio="none">
+        <path id="raw-path-display" fill="none" stroke="rgba(120,80,255,0.25)" stroke-width="2" stroke-dasharray="5,5"/>
+      </svg>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="runRawPath('figure8')">figure-8</button>
+      <button class="btn primary" onclick="runRawPath('zigzag')">zigzag</button>
+      <button class="btn primary" onclick="runRawPath('spiral')">spiral-ish</button>
+    </div>
+    <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#dot"</span>, {
+  duration: <span class="n">3</span>, repeat: -<span class="n">1</span>, ease: <span class="s">"none"</span>,
+  motionPath: {
+    path: <span class="s">"M 100,100 C 200,20 300,180 400,100 S 600,20 700,100"</span>,
+    <span style="color:var(--muted)">// raw path data string — no SVG element required</span>
+    autoRotate: <span class="n">true</span>
+  }
+});</div>
+  </div>
+</section>
+</main>
+
+<footer>
+  GSAP 3.15.0 · MotionPathPlugin · <span style="color:var(--accent4)">gsap.com/docs/v3/Plugins/MotionPathPlugin</span>
+</footer>
+
+<script>
+gsap.registerPlugin(MotionPathPlugin);
+
+// ── HERO ──
+gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+gsap.timeline({ delay: 0.3 })
+  .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+  .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+  .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+// ── 01 WAVE ──
+let waveTween;
+function runWave() {
+  if (waveTween) waveTween.kill();
+  waveTween = gsap.to('#wave-dot', {
+    duration: 3, ease: 'none',
+    motionPath: { path: '#wave-path', align: '#wave-path', alignOrigin: [0.5, 0.5] }
+  });
+}
+runWave();
+
+// ── 02 ROCKET ──
+let rocketTween;
+function runRocket() {
+  if (rocketTween) rocketTween.kill();
+  rocketTween = gsap.to('#rocket-dot', {
+    duration: 5, repeat: -1, ease: 'none',
+    motionPath: { path: '#loop-path', align: '#loop-path', alignOrigin: [0.5, 0.5], autoRotate: true }
+  });
+}
+runRocket();
+
+// ── 03 ALIGN ──
+function runAlign() {
+  gsap.killTweensOf(['#ao-center','#ao-tl','#ao-br']);
+  const opts = { path: '#circle-path', align: '#circle-path' };
+  gsap.to('#ao-center', { duration:3, repeat:-1, ease:'none', motionPath:{...opts, alignOrigin:[0.5,0.5]} });
+  gsap.to('#ao-tl',     { duration:3, repeat:-1, ease:'none', motionPath:{...opts, alignOrigin:[0,0]},   delay:0.2 });
+  gsap.to('#ao-br',     { duration:3, repeat:-1, ease:'none', motionPath:{...opts, alignOrigin:[1,1]},   delay:0.4 });
+}
+runAlign();
+
+// ── 04 CONVOY ──
+function runConvoy() {
+  gsap.killTweensOf(['#c1','#c2','#c3','#c4','#c5']);
+  gsap.to(['#c1','#c2','#c3','#c4','#c5'], {
+    duration: 3, ease: 'power1.inOut', stagger: 0.3,
+    motionPath: { path: '#convoy-path', align: '#convoy-path', alignOrigin: [0.5, 0.5], autoRotate: true }
+  });
+}
+
+// ── 05 ORBIT ──
+// Convert ellipse to path for MotionPathPlugin
+const orbitEl = document.getElementById('orbit-path-el');
+const cx = 400, cy = 110, rx = 340, ry = 80;
+const orbitD = `M ${cx+rx},${cy} A ${rx},${ry} 0 1 1 ${cx-rx},${cy} A ${rx},${ry} 0 1 1 ${cx+rx},${cy} Z`;
+const orbitPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+orbitPath.setAttribute('id','orbit-path');
+orbitPath.setAttribute('d', orbitD);
+orbitPath.setAttribute('fill','none');
+document.getElementById('orbit-svg').appendChild(orbitPath);
+
+const orbitTween = gsap.to('#satellite', {
+  duration: 6, repeat: -1, ease: 'none',
+  motionPath: { path: '#orbit-path', align: '#orbit-path', alignOrigin: [0.5, 0.5] }
+});
+
+function setOrbitSpeed(val) {
+  const s = val / 10;
+  document.getElementById('orbit-speed').textContent = s.toFixed(1) + '×';
+  orbitTween.timeScale(s);
+}
+
+// ── 06 RAW PATH ──
+const rawPaths = {
+  figure8: 'M 400,100 C 500,20 650,20 650,100 S 500,180 400,100 C 300,20 150,20 150,100 S 300,180 400,100 Z',
+  zigzag:  'M 50,150 L 200,50 L 350,150 L 500,50 L 650,150 L 750,100',
+  spiral:  'M 400,100 C 420,80 450,70 470,100 S 450,150 400,150 S 300,130 290,80 S 340,20 420,30 S 550,60 560,130 S 500,200 380,200'
+};
+
+let rawTween;
+function runRawPath(type) {
+  if (rawTween) rawTween.kill();
+  const d = rawPaths[type];
+  document.querySelector('#raw-path-display').setAttribute('d', d);
+  rawTween = gsap.to('#raw-dot', {
+    duration: 3, repeat: -1, ease: 'none',
+    motionPath: { path: d, autoRotate: true, alignOrigin: [0.5, 0.5] }
+  });
+}
+runRawPath('figure8');
+</script>
+</body>
+</html>

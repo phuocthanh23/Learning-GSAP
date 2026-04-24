@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GSAP Draggable — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/Draggable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/InertiaPlugin.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+    --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+    --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+    --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+  nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  main { padding-top: 52px; }
+  #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+  .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,92,138,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent3); border: 1px solid rgba(255,92,138,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; opacity: 0; }
+  #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; opacity: 0; }
+  #hero h1 span { color: var(--accent3); }
+  #hero p { font-size: 16px; color: var(--muted); max-width: 520px; margin-bottom: 2rem; opacity: 0; }
+  section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+  .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+  h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+  .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+  .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+  .demo-card:hover { border-color: var(--border-accent); }
+  .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+  .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+  .stage { background: var(--surface2); border-radius: 12px; padding: 1.5rem; min-height: 140px; display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 1rem; position: relative; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .btn:hover { border-color: var(--accent3); color: var(--text); background: rgba(255,92,138,0.08); }
+  .btn.primary { border-color: var(--accent3); color: var(--accent3); }
+  .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+  .code-snippet .k { color: var(--accent); }
+  .code-snippet .s { color: var(--accent2); }
+  .code-snippet .n { color: var(--accent4); }
+
+  /* DRAGGABLE ELEMENTS */
+  .drag-box {
+    width: 72px; height: 72px; border-radius: 12px; background: var(--accent3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 9px; color: white; font-weight: 700;
+    cursor: grab; user-select: none; touch-action: none;
+    box-shadow: 0 4px 20px rgba(255,92,138,0.3);
+  }
+  .drag-box:active { cursor: grabbing; }
+  .drag-box.teal { background: var(--accent2); color: #0a0a0f; box-shadow: 0 4px 20px rgba(0,229,192,0.3); }
+  .drag-box.amber { background: var(--accent4); color: #0a0a0f; box-shadow: 0 4px 20px rgba(255,184,48,0.3); }
+  .drag-box.purple { background: var(--accent); box-shadow: 0 4px 20px rgba(120,80,255,0.3); }
+
+  /* BOUNDS AREA */
+  .bounds-area {
+    border: 1.5px dashed rgba(255,92,138,0.4); border-radius: 12px;
+    width: 100%; min-height: 160px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bounds-label { font-family: var(--mono); font-size: 9px; color: rgba(255,92,138,0.5); position: absolute; top: 8px; left: 12px; }
+
+  /* KNOB */
+  .knob-wrap { position: relative; width: 120px; height: 120px; }
+  .knob-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid rgba(255,255,255,0.08); }
+  .knob-tick { position: absolute; width: 4px; height: 20px; background: var(--accent3); border-radius: 2px; top: 50%; left: 50%; transform-origin: bottom center; }
+  .knob-dot { width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(135deg, rgba(255,92,138,0.5), rgba(255,92,138,0.15)); border: 2px solid var(--accent3); position: absolute; inset: 0; margin: auto; cursor: grab; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 9px; color: var(--accent3); user-select: none; touch-action: none; }
+
+  /* SNAP GRID */
+  .snap-arena {
+    width: 100%; min-height: 200px; position: relative;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+  }
+  .snap-cell { border: 1px dashed rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; min-height: 60px; }
+
+  /* CARD THROW */
+  .throw-arena { width: 100%; min-height: 180px; position: relative; overflow: hidden; border-radius: 8px; }
+
+  /* STAT DISPLAY */
+  .stat-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 0.75rem; }
+  .stat { }
+  .stat-label { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+  .stat-val { font-family: var(--mono); font-size: 13px; color: var(--accent2); }
+
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#basic">Basic</a>
+  <a href="#bounds">Bounds</a>
+  <a href="#rotation">Rotation</a>
+  <a href="#inertia">Inertia</a>
+  <a href="#snap">Snap</a>
+  <a href="#callbacks">Callbacks</a>
+</nav>
+
+<main>
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="tag" id="hero-tag">GSAP 3.15 · Draggable + InertiaPlugin · Demo</div>
+  <h1 id="hero-title">Drag<br /><span>gable</span></h1>
+  <p id="hero-desc">Mouse and touch drag for any element. Constrain to bounds, rotate, snap, and add momentum with InertiaPlugin.</p>
+</div>
+
+<!-- ── 01 BASIC ── -->
+<section id="basic">
+  <div class="section-label">01 — Basic</div>
+  <h2>Draggable.create()</h2>
+  <p class="section-desc">Make any element draggable with one call. type controls the axis: "x", "y", "x,y", or "rotation".</p>
+
+  <div class="demo-card">
+    <h3>type: "x,y" — free drag</h3>
+    <p>Drag the box freely in any direction. The position is managed by GSAP transforms.</p>
+    <div class="stage" style="min-height:200px;">
+      <div class="drag-box" id="d-free">drag me</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="Draggable.get('#d-free').disable(); Draggable.get('#d-free').enable()">re-enable</button>
+      <button class="btn" onclick="gsap.to('#d-free',{x:0,y:0,duration:0.5,ease:'back.out'})">reset pos</button>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#d-free"</span>, {
+  type: <span class="s">"x,y"</span>
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>type: "x" — horizontal only</h3>
+    <p>Restrict dragging to a single axis.</p>
+    <div class="stage">
+      <div class="drag-box teal" id="d-x" style="font-size:8px;">← drag →</div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="gsap.to('#d-x',{x:0,duration:0.4,ease:'back.out'})">reset</button>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#d-x"</span>, { type: <span class="s">"x"</span> });
+<span class="k">Draggable</span>.create(<span class="s">"#d-y"</span>, { type: <span class="s">"y"</span> }); <span style="color:var(--muted)">// vertical only</span></div>
+  </div>
+</section>
+
+<!-- ── 02 BOUNDS ── -->
+<section id="bounds">
+  <div class="section-label">02 — Bounds</div>
+  <h2>bounds — constrained drag</h2>
+  <p class="section-desc">Keep elements inside a container with bounds. Pass a selector, element, or {minX, maxX, minY, maxY} object.</p>
+
+  <div class="demo-card">
+    <h3>bounds: "#container"</h3>
+    <p>The box cannot leave the dashed boundary. Try dragging it to the edge.</p>
+    <div class="stage">
+      <div class="bounds-area" id="bounds-box">
+        <div class="bounds-label">bounds area</div>
+        <div class="drag-box amber" id="d-bounded">bounded</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#d-bounded"</span>, {
+  type: <span class="s">"x,y"</span>,
+  bounds: <span class="s">"#bounds-box"</span>,
+  edgeResistance: <span class="n">0.85</span>   <span style="color:var(--muted)">// resistance when hitting edges</span>
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>edgeResistance — soft boundary</h3>
+    <p>Values 0–1. At 0 = no resistance (hard stop). At 1 = immovable. Try dragging past the edge.</p>
+    <div class="stage">
+      <div class="bounds-area" id="bounds-resist">
+        <div class="bounds-label">edge resistance: 0.65</div>
+        <div class="drag-box purple" id="d-resist">resist</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#d-resist"</span>, {
+  type: <span class="s">"x,y"</span>,
+  bounds: <span class="s">"#bounds-resist"</span>,
+  edgeResistance: <span class="n">0.65</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 03 ROTATION ── -->
+<section id="rotation">
+  <div class="section-label">03 — Rotation</div>
+  <h2>type: "rotation" — spin</h2>
+  <p class="section-desc">Drag in a circular motion to rotate an element. Great for dials, knobs, and spin wheels.</p>
+
+  <div class="demo-card">
+    <h3>Rotatable knob</h3>
+    <p>Drag around the knob to rotate it. The current angle is shown below.</p>
+    <div class="stage" style="flex-direction:column; gap:1rem;">
+      <div class="knob-wrap">
+        <div class="knob-ring"></div>
+        <div class="knob-dot" id="knob">◎</div>
+        <div class="knob-tick" id="knob-tick" style="transform: translateX(-50%) rotate(0deg) translateY(-100%);"></div>
+      </div>
+      <div class="stat-row" style="justify-content:center;">
+        <div class="stat"><div class="stat-label">rotation</div><div class="stat-val" id="knob-val">0°</div></div>
+        <div class="stat"><div class="stat-label">normalized (0–1)</div><div class="stat-val" id="knob-norm">0.00</div></div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#knob"</span>, {
+  type: <span class="s">"rotation"</span>,
+  onDrag() {
+    const deg = Math.round(this.rotation % <span class="n">360</span>);
+    label.textContent = deg + <span class="s">'°'</span>;
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ── 04 INERTIA ── -->
+<section id="inertia">
+  <div class="section-label">04 — Inertia</div>
+  <h2>inertia: true — throw with momentum</h2>
+  <p class="section-desc">InertiaPlugin adds realistic throw/momentum after release. The velocity at release determines how far the element travels.</p>
+
+  <div class="demo-card">
+    <h3>Throw cards with inertia</h3>
+    <p>Drag a card fast and release — it keeps moving with momentum and slows to a stop.</p>
+    <div class="stage" style="min-height:200px; position:relative;" id="throw-arena">
+      <div class="drag-box" id="d-inertia1" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">throw</div>
+      <div class="drag-box teal" id="d-inertia2" style="position:absolute; top:30%; left:35%; transform:translate(-50%,-50%);">toss</div>
+      <div class="drag-box amber" id="d-inertia3" style="position:absolute; top:65%; left:65%; transform:translate(-50%,-50%);">fling</div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="resetThrow()">reset positions</button>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">".card"</span>, {
+  type: <span class="s">"x,y"</span>,
+  bounds: <span class="s">"#arena"</span>,
+  inertia: <span class="n">true</span>,     <span style="color:var(--muted)">// requires InertiaPlugin</span>
+  edgeResistance: <span class="n">0.75</span>
+});</div>
+  </div>
+</section>
+
+<!-- ── 05 SNAP ── -->
+<section id="snap">
+  <div class="section-label">05 — Snap</div>
+  <h2>snap — lock to grid on release</h2>
+  <p class="section-desc">Use snap to define discrete positions. The element snaps to the nearest allowed position when released.</p>
+
+  <div class="demo-card">
+    <h3>snap: { x: gridFn, y: gridFn }</h3>
+    <p>Drag the box across the grid. On release it snaps to the nearest cell center.</p>
+    <div class="stage" style="padding:0.5rem; min-height:220px; align-items:stretch;">
+      <div style="position:relative; width:100%; height:200px; background:rgba(0,0,0,0.2); border-radius:8px;" id="snap-arena">
+        <div class="drag-box" id="d-snap" style="position:absolute; top:0; left:0; font-size:8px;">snap</div>
+      </div>
+    </div>
+    <div class="code-snippet"><span class="k">const</span> cellW = arena.offsetWidth / <span class="n">4</span>;
+<span class="k">const</span> cellH = arena.offsetHeight / <span class="n">3</span>;
+<span class="k">Draggable</span>.create(<span class="s">"#d-snap"</span>, {
+  type: <span class="s">"x,y"</span>, bounds: <span class="s">"#snap-arena"</span>,
+  snap: {
+    x: v => Math.round(v / cellW) * cellW,
+    y: v => Math.round(v / cellH) * cellH
+  }
+});</div>
+  </div>
+</section>
+
+<!-- ── 06 CALLBACKS ── -->
+<section id="callbacks">
+  <div class="section-label">06 — Callbacks</div>
+  <h2>onDragStart / onDrag / onDragEnd</h2>
+  <p class="section-desc">React to drag events. Each callback receives the Draggable instance as <code style="color:var(--accent2)">this</code> with x, y, rotation, velocity, and more.</p>
+
+  <div class="demo-card">
+    <h3>Live position + velocity readout</h3>
+    <p>Drag the box to see x, y, and velocity update in real-time.</p>
+    <div class="stage" style="min-height:200px; position:relative;" id="cb-arena">
+      <div class="drag-box teal" id="d-cb" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">drag</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-label">x</div><div class="stat-val" id="cb-x">0</div></div>
+      <div class="stat"><div class="stat-label">y</div><div class="stat-val" id="cb-y">0</div></div>
+      <div class="stat"><div class="stat-label">velocityX</div><div class="stat-val" id="cb-vx">0</div></div>
+      <div class="stat"><div class="stat-label">velocityY</div><div class="stat-val" id="cb-vy">0</div></div>
+      <div class="stat"><div class="stat-label">isDragging</div><div class="stat-val" id="cb-active">false</div></div>
+    </div>
+    <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#d-cb"</span>, {
+  type: <span class="s">"x,y"</span>, bounds: <span class="s">"#cb-arena"</span>,
+  onDragStart() { document.querySelector(<span class="s">'#cb-active'</span>).textContent = <span class="s">'true'</span>; },
+  onDrag()      { update(this.x, this.y, this.getVelocity(<span class="s">"x"</span>), this.getVelocity(<span class="s">"y"</span>)); },
+  onDragEnd()   { document.querySelector(<span class="s">'#cb-active'</span>).textContent = <span class="s">'false'</span>; }
+});</div>
+  </div>
+
+  <div class="demo-card">
+    <h3>Draggable.get() — control instances</h3>
+    <p>Get an existing Draggable instance to enable/disable/kill it programmatically.</p>
+    <div class="stage">
+      <div class="drag-box" id="d-ctrl" style="font-size:8px;">toggle me</div>
+    </div>
+    <div class="controls">
+      <button class="btn primary" onclick="Draggable.get('#d-ctrl').enable(); document.getElementById('ctrl-status').textContent='enabled'">enable</button>
+      <button class="btn" onclick="Draggable.get('#d-ctrl').disable(); document.getElementById('ctrl-status').textContent='disabled'">disable</button>
+      <button class="btn" onclick="gsap.to('#d-ctrl',{x:0,y:0,duration:0.5,ease:'back.out'})">reset pos</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:11px;color:var(--accent2);margin-top:0.5rem;" id="ctrl-status">enabled</div>
+    <div class="code-snippet"><span class="k">const</span> d = <span class="k">Draggable</span>.get(<span class="s">"#d-ctrl"</span>);
+d.disable();   <span style="color:var(--muted)">// stops responding to drag</span>
+d.enable();    <span style="color:var(--muted)">// re-activates</span>
+d.kill();      <span style="color:var(--muted)">// completely removes</span></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  GSAP 3.15.0 · Draggable + InertiaPlugin · <span style="color:var(--accent3)">gsap.com/docs/v3/Plugins/Draggable</span>
+</footer>
+
+<script>
+gsap.registerPlugin(Draggable, InertiaPlugin);
+
+// ── HERO ──
+gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+gsap.timeline({ delay: 0.3 })
+  .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+  .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+  .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+// ── 01 FREE ──
+Draggable.create('#d-free', { type: 'x,y' });
+Draggable.create('#d-x',    { type: 'x' });
+
+// ── 02 BOUNDS ──
+Draggable.create('#d-bounded', { type: 'x,y', bounds: '#bounds-box',   edgeResistance: 0.85 });
+Draggable.create('#d-resist',  { type: 'x,y', bounds: '#bounds-resist', edgeResistance: 0.65 });
+
+// ── 03 ROTATION ──
+Draggable.create('#knob', {
+  type: 'rotation',
+  onDrag() {
+    const deg = Math.round(((this.rotation % 360) + 360) % 360);
+    document.getElementById('knob-val').textContent  = deg + '°';
+    document.getElementById('knob-norm').textContent = (deg / 360).toFixed(2);
+  }
+});
+
+// ── 04 INERTIA ──
+['#d-inertia1','#d-inertia2','#d-inertia3'].forEach(id => {
+  Draggable.create(id, { type: 'x,y', bounds: '#throw-arena', inertia: true, edgeResistance: 0.75 });
+});
+
+function resetThrow() {
+  gsap.to('#d-inertia1', { x:0, y:0, duration:0.6, ease:'back.out(1.5)' });
+  gsap.to('#d-inertia2', { x:0, y:0, duration:0.6, ease:'back.out(1.5)', delay:0.08 });
+  gsap.to('#d-inertia3', { x:0, y:0, duration:0.6, ease:'back.out(1.5)', delay:0.16 });
+  ['#d-inertia1','#d-inertia2','#d-inertia3'].forEach(id => Draggable.get(id)?.update());
+}
+
+// ── 05 SNAP ──
+const snapArena = document.getElementById('snap-arena');
+const COLS = 4, ROWS = 3;
+Draggable.create('#d-snap', {
+  type: 'x,y',
+  bounds: '#snap-arena',
+  snap: {
+    x: v => {
+      const cW = snapArena.offsetWidth / COLS;
+      return Math.round(v / cW) * cW;
+    },
+    y: v => {
+      const cH = snapArena.offsetHeight / ROWS;
+      return Math.round(v / cH) * cH;
+    }
+  }
+});
+
+// ── 06 CALLBACKS ──
+Draggable.create('#d-cb', {
+  type: 'x,y',
+  bounds: '#cb-arena',
+  onDragStart() { document.getElementById('cb-active').textContent = 'true'; },
+  onDrag() {
+    document.getElementById('cb-x').textContent  = Math.round(this.x);
+    document.getElementById('cb-y').textContent  = Math.round(this.y);
+    document.getElementById('cb-vx').textContent = Math.round(this.getVelocity('x'));
+    document.getElementById('cb-vy').textContent = Math.round(this.getVelocity('y'));
+  },
+  onDragEnd() { document.getElementById('cb-active').textContent = 'false'; }
+});
+
+Draggable.create('#d-ctrl', { type: 'x,y' });
+</script>
+</body>
+</html>

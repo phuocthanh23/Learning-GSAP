@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CustomBounce — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* Demo-specific */
+    .ball {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent4), var(--accent3));
+      box-shadow: 0 4px 20px rgba(255,184,48,0.4);
+      flex-shrink: 0;
+    }
+    .ball-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    }
+    .ball-label {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      margin-top: 6px; white-space: nowrap;
+    }
+    .stage-tall { min-height: 260px; }
+    .stage-race { align-items: flex-start; gap: 0; }
+    .race-lane {
+      display: flex; flex-direction: column; align-items: center;
+      flex: 1; padding-top: 12px; position: relative;
+    }
+    .race-ball {
+      width: 32px; height: 32px; border-radius: 50%;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .ground-line {
+      position: absolute; bottom: 16px; left: 0; right: 0;
+      height: 1px; background: rgba(255,255,255,0.08);
+    }
+    .shadow-el {
+      width: 40px; height: 8px; border-radius: 50%;
+      background: rgba(0,0,0,0.5); position: absolute;
+      bottom: 20px; left: 50%; transform: translateX(-50%);
+    }
+    .timeline-stage { min-height: 260px; }
+    .tl-ball { width: 36px; height: 36px; border-radius: 50%; position: absolute; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html" selected>CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#basic">Basic</a>
+  <a href="#squash">Squash</a>
+  <a href="#strength">Strength</a>
+  <a href="#shadow">Shadow</a>
+  <a href="#timeline">Timeline</a>
+</nav>
+
+<main>
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · CustomBounce · Demo</div>
+    <h1 id="hero-title">Custom<br/><span>Bounce</span></h1>
+    <p id="hero-desc">Create perfectly paired bounce and squash eases that work in tandem — physics-based ball drops with realistic squash-and-stretch.</p>
+  </div>
+
+  <!-- Section 1: Basic Bounce -->
+  <section id="basic">
+    <div class="section-label">01 — CustomBounce</div>
+    <h2>Basic Bounce</h2>
+    <p class="section-desc">A ball drops and bounces using a custom ease created with <code>CustomBounce.create()</code>. No squash, just a clean multi-bounce arrival.</p>
+
+    <div class="demo-card">
+      <h3>// strength: 0.6 — clean bounce, no squash</h3>
+      <p>CustomBounce creates a new ease (registered as "myBounce") that drives the y position through a realistic bounce pattern.</p>
+      <div class="stage stage-tall" id="stage-basic">
+        <div class="ball-wrap" id="basic-wrap">
+          <div class="ball" id="basic-ball"></div>
+        </div>
+        <div style="position:absolute;bottom:16px;left:0;right:0;height:1px;background:rgba(255,255,255,0.08);"></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-basic-drop">drop!</button>
+        <button class="btn" id="btn-basic-reset">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomBounce</span>.create(<span class="s">"myBounce"</span>, { <span class="n">strength</span>: 0.6, <span class="n">squash</span>: 0 });
+gsap.to(<span class="s">".ball"</span>, { <span class="n">y</span>: 160, <span class="n">ease</span>: <span class="s">"myBounce"</span>, <span class="n">duration</span>: 2 });</div>
+    </div>
+  </section>
+
+  <!-- Section 2: Squash & Stretch -->
+  <section id="squash">
+    <div class="section-label">02 — CustomBounce</div>
+    <h2>Squash & Stretch</h2>
+    <p class="section-desc">Two simultaneous tweens in a timeline — one drives <code>y</code> with the bounce ease, the other drives <code>scaleX/scaleY</code> with the paired squash ease.</p>
+
+    <div class="demo-card">
+      <h3>// squash: 3 — heavy squash on impact</h3>
+      <p>The <code>squashID</code> option creates a complementary ease for scale that perfectly syncs with the bounce impacts.</p>
+      <div class="stage stage-tall" id="stage-squash">
+        <div class="ball-wrap" id="squash-wrap">
+          <div class="ball" id="squash-ball"></div>
+        </div>
+        <div style="position:absolute;bottom:16px;left:0;right:0;height:1px;background:rgba(255,255,255,0.08);"></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-squash-drop">drop!</button>
+        <button class="btn" id="btn-squash-reset">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomBounce</span>.create(<span class="s">"squashBounce"</span>, {
+  <span class="n">strength</span>: 0.6,
+  <span class="n">squash</span>: 3,
+  <span class="n">squashID</span>: <span class="s">"squashBounce-squash"</span>
+});
+gsap.timeline()
+  .to(<span class="s">"#squash-ball"</span>, { <span class="n">y</span>: 160, <span class="n">ease</span>: <span class="s">"squashBounce"</span>, <span class="n">duration</span>: 2 })
+  .to(<span class="s">"#squash-ball"</span>, { <span class="n">scaleX</span>: 1.4, <span class="n">scaleY</span>: 0.6,
+      <span class="n">ease</span>: <span class="s">"squashBounce-squash"</span>, <span class="n">duration</span>: 2 }, <span class="n">0</span>);</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Strength Comparison -->
+  <section id="strength">
+    <div class="section-label">03 — CustomBounce</div>
+    <h2>Strength Comparison</h2>
+    <p class="section-desc">Four balls with different <code>strength</code> values race simultaneously. Higher strength = more bounces and more energy retained.</p>
+
+    <div class="demo-card">
+      <h3>// strength: 0.2 | 0.4 | 0.7 | 0.9</h3>
+      <p>Strength ranges from 0 (no bounce, just eases in) to 1 (maximum number of bounces). Watch how each ball behaves differently.</p>
+      <div class="stage stage-tall stage-race" id="stage-race">
+        <div class="race-lane" id="lane-02">
+          <div class="race-ball" id="race-02" style="background:linear-gradient(135deg,#7850ff,#00e5c0);"></div>
+          <div class="ball-label">0.2</div>
+        </div>
+        <div class="race-lane" id="lane-04">
+          <div class="race-ball" id="race-04" style="background:linear-gradient(135deg,#00e5c0,#7850ff);"></div>
+          <div class="ball-label">0.4</div>
+        </div>
+        <div class="race-lane" id="lane-07">
+          <div class="race-ball" id="race-07" style="background:linear-gradient(135deg,#ff5c8a,#ffb830);"></div>
+          <div class="ball-label">0.7</div>
+        </div>
+        <div class="race-lane" id="lane-09">
+          <div class="race-ball" id="race-09" style="background:linear-gradient(135deg,#ffb830,#ff5c8a);"></div>
+          <div class="ball-label">0.9</div>
+        </div>
+        <div class="ground-line"></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-race">race!</button>
+        <button class="btn" id="btn-race-reset">reset</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Drop Shadow Sync -->
+  <section id="shadow">
+    <div class="section-label">04 — CustomBounce</div>
+    <h2>Drop Shadow Sync</h2>
+    <p class="section-desc">A synchronized shadow scales inversely as the ball bounces — big shadow when ball is low, small shadow when ball is high. A classic animation trick.</p>
+
+    <div class="demo-card">
+      <h3>// shadow scaleX driven by the same ease</h3>
+      <p>Both the ball's y position and the shadow's scale use the same "shadowBounce" ease, keeping them perfectly in sync.</p>
+      <div class="stage stage-tall" id="stage-shadow">
+        <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);">
+          <div class="ball" id="shadow-ball"></div>
+        </div>
+        <div class="shadow-el" id="shadow-el"></div>
+        <div style="position:absolute;bottom:16px;left:0;right:0;height:1px;background:rgba(255,255,255,0.08);"></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-shadow-drop">drop!</button>
+        <button class="btn" id="btn-shadow-reset">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomBounce</span>.create(<span class="s">"shadowBounce"</span>, { <span class="n">strength</span>: 0.6, <span class="n">squash</span>: 0 });
+<span class="k">gsap</span>.timeline()
+  .to(<span class="s">"#shadow-ball"</span>, { <span class="n">y</span>: 165, <span class="n">ease</span>: <span class="s">"shadowBounce"</span>, <span class="n">duration</span>: 2 }, <span class="n">0</span>)
+  .to(<span class="s">"#shadow-el"</span>,  { <span class="n">scaleX</span>: 2.5, <span class="n">ease</span>: <span class="s">"shadowBounce"</span>, <span class="n">duration</span>: 2 }, <span class="n">0</span>);</div>
+    </div>
+  </section>
+
+  <!-- Section 5: Choreographed Timeline -->
+  <section id="timeline">
+    <div class="section-label">05 — CustomBounce</div>
+    <h2>Choreographed Sequence</h2>
+    <p class="section-desc">Three balls drop at staggered times using a GSAP timeline with position offsets. Each has squash enabled for a satisfying cascading effect.</p>
+
+    <div class="demo-card">
+      <h3>// staggered drops with squash on each ball</h3>
+      <p>Position offsets in the timeline control when each ball starts, creating a wave-like choreography.</p>
+      <div class="stage timeline-stage" id="stage-timeline">
+        <div style="position:absolute;top:16px;left:22%;transform:translateX(-50%);">
+          <div class="tl-ball" id="tl-ball-a" style="background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 2px 16px rgba(120,80,255,0.4);"></div>
+        </div>
+        <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);">
+          <div class="tl-ball" id="tl-ball-b" style="background:linear-gradient(135deg,var(--accent2),var(--accent4));box-shadow:0 2px 16px rgba(0,229,192,0.4);"></div>
+        </div>
+        <div style="position:absolute;top:16px;left:78%;transform:translateX(-50%);">
+          <div class="tl-ball" id="tl-ball-c" style="background:linear-gradient(135deg,var(--accent4),var(--accent3));box-shadow:0 2px 16px rgba(255,184,48,0.4);"></div>
+        </div>
+        <div style="position:absolute;bottom:16px;left:0;right:0;height:1px;background:rgba(255,255,255,0.08);"></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-tl-play">play sequence</button>
+        <button class="btn" id="btn-tl-reset">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomBounce</span>.create(<span class="s">"seqBounce"</span>, { <span class="n">strength</span>: 0.65, <span class="n">squash</span>: 2, <span class="n">squashID</span>: <span class="s">"seqBounce-squash"</span> });
+<span class="k">const</span> tl = gsap.timeline();
+[ballA, ballB, ballC].forEach((ball, i) => {
+  tl.to(ball, { <span class="n">y</span>: 185, <span class="n">ease</span>: <span class="s">"seqBounce"</span>, <span class="n">duration</span>: 2 }, i * <span class="n">0.4</span>)
+    .to(ball, { <span class="n">scaleX</span>: 1.4, <span class="n">scaleY</span>: 0.6, <span class="n">ease</span>: <span class="s">"seqBounce-squash"</span>, <span class="n">duration</span>: 2 }, i * <span class="n">0.4</span>);
+});</div>
+    </div>
+  </section>
+</main>
+
+<footer>GSAP 3.15 · CustomBounce Demo · Built with vanilla HTML &amp; JS</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/EasePack.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/CustomEase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/CustomBounce.min.js"></script>
+<script>
+  gsap.registerPlugin(CustomBounce, CustomEase, EasePack);
+
+  /* ── Hero entrance ── */
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  /* ── Section 1: Basic Bounce ── */
+  CustomBounce.create("myBounce", { strength: 0.6, squash: 0 });
+
+  const basicWrap = document.getElementById('basic-wrap');
+  let basicTl = null;
+
+  document.getElementById('btn-basic-drop').addEventListener('click', () => {
+    if (basicTl) basicTl.kill();
+    gsap.set(basicWrap, { y: 0 });
+    basicTl = gsap.to(basicWrap, { y: 160, ease: "myBounce", duration: 2 });
+  });
+  document.getElementById('btn-basic-reset').addEventListener('click', () => {
+    if (basicTl) basicTl.kill();
+    gsap.to(basicWrap, { y: 0, duration: 0.4, ease: 'power2.out' });
+  });
+
+  /* ── Section 2: Squash & Stretch ── */
+  CustomBounce.create("squashBounce", { strength: 0.6, squash: 3, squashID: "squashBounce-squash" });
+
+  const squashWrap = document.getElementById('squash-wrap');
+  const squashBall = document.getElementById('squash-ball');
+  let squashTl = null;
+
+  document.getElementById('btn-squash-drop').addEventListener('click', () => {
+    if (squashTl) squashTl.kill();
+    gsap.set(squashWrap, { y: 0 });
+    gsap.set(squashBall, { scaleX: 1, scaleY: 1 });
+    squashTl = gsap.timeline()
+      .to(squashWrap, { y: 160, ease: "squashBounce", duration: 2 }, 0)
+      .to(squashBall, { scaleX: 1.4, scaleY: 0.6, ease: "squashBounce-squash", duration: 2 }, 0);
+  });
+  document.getElementById('btn-squash-reset').addEventListener('click', () => {
+    if (squashTl) squashTl.kill();
+    gsap.to(squashWrap, { y: 0, duration: 0.4, ease: 'power2.out' });
+    gsap.to(squashBall, { scaleX: 1, scaleY: 1, duration: 0.4, ease: 'power2.out' });
+  });
+
+  /* ── Section 3: Strength Comparison ── */
+  const strengths = [
+    { id: 'race-02', val: 0.2, easeName: 'bounce02' },
+    { id: 'race-04', val: 0.4, easeName: 'bounce04' },
+    { id: 'race-07', val: 0.7, easeName: 'bounce07' },
+    { id: 'race-09', val: 0.9, easeName: 'bounce09' },
+  ];
+  strengths.forEach(({ easeName, val }) => {
+    CustomBounce.create(easeName, { strength: val, squash: 0 });
+  });
+
+  const stageRace = document.getElementById('stage-race');
+  const raceBottom = 190; // px from top of stage to ground
+
+  let raceTl = null;
+  document.getElementById('btn-race').addEventListener('click', () => {
+    if (raceTl) raceTl.kill();
+    strengths.forEach(({ id }) => gsap.set('#' + id, { y: 0 }));
+    raceTl = gsap.timeline();
+    strengths.forEach(({ id, easeName }) => {
+      raceTl.to('#' + id, { y: raceBottom, ease: easeName, duration: 2.5 }, 0);
+    });
+  });
+  document.getElementById('btn-race-reset').addEventListener('click', () => {
+    if (raceTl) raceTl.kill();
+    strengths.forEach(({ id }) => gsap.to('#' + id, { y: 0, duration: 0.4, ease: 'power2.out' }));
+  });
+
+  /* ── Section 4: Shadow Sync ── */
+  CustomBounce.create("shadowBounce", { strength: 0.6, squash: 0 });
+
+  const shadowBall = document.getElementById('shadow-ball');
+  const shadowEl = document.getElementById('shadow-el');
+  let shadowTl = null;
+
+  gsap.set(shadowEl, { scaleX: 0.4, opacity: 0.3 });
+
+  document.getElementById('btn-shadow-drop').addEventListener('click', () => {
+    if (shadowTl) shadowTl.kill();
+    gsap.set(shadowBall, { y: 0, scaleX: 1, scaleY: 1 });
+    gsap.set(shadowEl, { scaleX: 0.4, opacity: 0.3 });
+    shadowTl = gsap.timeline()
+      .to(shadowBall, { y: 165, ease: "shadowBounce", duration: 2 }, 0)
+      .to(shadowEl,   { scaleX: 2.5, opacity: 0.7, ease: "shadowBounce", duration: 2 }, 0);
+  });
+  document.getElementById('btn-shadow-reset').addEventListener('click', () => {
+    if (shadowTl) shadowTl.kill();
+    gsap.to(shadowBall, { y: 0, duration: 0.4, ease: 'power2.out' });
+    gsap.to(shadowEl,   { scaleX: 0.4, opacity: 0.3, duration: 0.4, ease: 'power2.out' });
+  });
+
+  /* ── Section 5: Choreographed Timeline ── */
+  CustomBounce.create("seqBounce", { strength: 0.65, squash: 2, squashID: "seqBounce-squash" });
+
+  const tlBalls = ['#tl-ball-a', '#tl-ball-b', '#tl-ball-c'];
+  let seqTl = null;
+
+  document.getElementById('btn-tl-play').addEventListener('click', () => {
+    if (seqTl) seqTl.kill();
+    tlBalls.forEach(sel => gsap.set(sel, { y: 0, scaleX: 1, scaleY: 1 }));
+    seqTl = gsap.timeline();
+    tlBalls.forEach((sel, i) => {
+      seqTl
+        .to(sel, { y: 185, ease: "seqBounce", duration: 2 }, i * 0.4)
+        .to(sel, { scaleX: 1.4, scaleY: 0.6, ease: "seqBounce-squash", duration: 2 }, i * 0.4);
+    });
+  });
+  document.getElementById('btn-tl-reset').addEventListener('click', () => {
+    if (seqTl) seqTl.kill();
+    tlBalls.forEach(sel => {
+      gsap.to(sel, { y: 0, scaleX: 1, scaleY: 1, duration: 0.4, ease: 'power2.out' });
+    });
+  });
+</script>
+</body>
+</html>

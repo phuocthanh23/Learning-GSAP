@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasePack — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,184,48,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* Demo-specific */
+    .ball {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent4);
+      box-shadow: 0 0 16px rgba(255,184,48,0.5);
+      flex-shrink: 0;
+    }
+    .track { width: 100%; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; position: relative; }
+    .track-fill { height: 100%; width: 0; background: var(--accent); border-radius: 2px; }
+
+    .ball-stage { width: 100%; display: flex; flex-direction: column; gap: 16px; padding: 1rem 2rem; }
+    .ball-row { display: flex; align-items: center; gap: 12px; }
+    .ball-label { font-family: var(--mono); font-size: 10px; color: var(--muted); width: 110px; flex-shrink: 0; text-align: right; }
+    .ball-track { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; position: relative; }
+    .race-ball { width: 22px; height: 22px; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); left: 0; }
+
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row label { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .slider-row input[type=range] { accent-color: var(--accent); }
+    .slider-val { font-family: var(--mono); font-size: 11px; color: var(--accent4); min-width: 28px; }
+
+    canvas#easeCanvas { border-radius: 8px; background: rgba(0,0,0,0.3); display: block; }
+
+    .step-compare { display: flex; gap: 24px; }
+    .step-col { flex: 1; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+    .step-col-label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .step-ball-wrap { width: 100%; height: 36px; position: relative; }
+    .step-ball { width: 24px; height: 24px; border-radius: 50%; position: absolute; top: 50%; transform: translateY(-50%); left: 0; }
+
+    .expo-box { width: 60px; height: 60px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 10px; color: #fff; text-align: center; }
+
+    select.inline-select { font-family: var(--mono); font-size: 11px; background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; cursor: pointer; outline: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html" selected>EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#slowmo">SlowMo</a>
+  <a href="#roughease">RoughEase</a>
+  <a href="#steppedease">SteppedEase</a>
+  <a href="#exposcale">ExpoScaleEase</a>
+  <a href="#compare">Gallery Race</a>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · EasePack · Demo</div>
+    <h1 id="hero-title">Ease<br/><span>Pack</span></h1>
+    <p id="hero-desc">SlowMo, RoughEase, SteppedEase, ExpoScaleEase — specialty easing functions that go far beyond the standard library.</p>
+  </div>
+
+  <!-- SLOWMO -->
+  <section id="slowmo">
+    <div class="section-label">01 — SlowMo</div>
+    <h2>SlowMo Ease</h2>
+    <p class="section-desc">Moves fast at start and end but slows dramatically in the middle. Perfect for cinematic text reveals and dramatic entrances.</p>
+
+    <div class="demo-card">
+      <h3>// SlowMo.ease.config(linearRatio, power, yoyoMode)</h3>
+      <p>Adjust the sliders to reshape the ease. The curve preview updates live.</p>
+
+      <div class="stage" style="flex-direction: column; gap: 16px;">
+        <div style="width: calc(100% - 3rem); position: relative; height: 28px;">
+          <div class="ball" id="slowmo-ball" style="position: absolute; left: 0; top: 0; transform: translateX(0);"></div>
+        </div>
+        <canvas id="easeCanvas" width="300" height="100"></canvas>
+      </div>
+
+      <div class="controls" style="margin-bottom: 1rem; flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div class="slider-row">
+          <label>linearRatio</label>
+          <input type="range" id="slomo-linear" min="0" max="1" step="0.05" value="0.7" />
+          <span class="slider-val" id="slomo-linear-val">0.7</span>
+        </div>
+        <div class="slider-row">
+          <label>power</label>
+          <input type="range" id="slomo-power" min="0" max="1" step="0.05" value="0.7" />
+          <span class="slider-val" id="slomo-power-val">0.7</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="slowmo-play-btn">play</button>
+        <button class="btn" id="slowmo-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#ball"</span>, {
+  x: <span class="n">trackWidth</span>,
+  duration: <span class="n">2</span>,
+  ease: <span class="k">SlowMo</span>.ease.config(<span class="n">0.7</span>, <span class="n">0.7</span>, <span class="n">false</span>)
+});</div>
+    </div>
+  </section>
+
+  <!-- ROUGHEASE -->
+  <section id="roughease">
+    <div class="section-label">02 — RoughEase</div>
+    <h2>Rough Ease</h2>
+    <p class="section-desc">Adds random "roughness" to a motion path. Great for simulating shaking, jitter, glitch, or organic movement.</p>
+
+    <div class="demo-card">
+      <h3>// RoughEase with configurable strength &amp; template</h3>
+      <p>The ball shakes with a rough path. Randomize to generate a new noise pattern.</p>
+
+      <div class="stage" style="flex-direction: column; gap: 16px;">
+        <div style="width: calc(100% - 3rem); position: relative; height: 28px;">
+          <div class="ball" id="rough-ball" style="position: absolute; left: 0; top: 0; background: var(--accent3); box-shadow: 0 0 16px rgba(255,92,138,0.5);"></div>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-bottom: 1rem; flex-direction: column; align-items: flex-start; gap: 10px;">
+        <div class="slider-row">
+          <label>strength</label>
+          <input type="range" id="rough-strength" min="0.1" max="3" step="0.1" value="1" />
+          <span class="slider-val" id="rough-strength-val">1.0</span>
+        </div>
+        <div class="slider-row">
+          <label>template</label>
+          <select class="inline-select" id="rough-template">
+            <option value="power0">power0 (linear)</option>
+            <option value="power1">power1</option>
+            <option value="power2" selected>power2</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="rough-play-btn">play</button>
+        <button class="btn" id="rough-random-btn">randomize</button>
+        <button class="btn" id="rough-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#ball"</span>, {
+  x: <span class="n">trackWidth</span>,
+  duration: <span class="n">2</span>,
+  ease: <span class="s">"rough({strength:1, points:20, template:power2, randomize:true, clamp:false})"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- STEPPEDEASE -->
+  <section id="steppedease">
+    <div class="section-label">03 — SteppedEase</div>
+    <h2>Stepped Ease</h2>
+    <p class="section-desc">Moves in discrete, quantised jumps instead of continuous motion. Ideal for sprite animations or retro-style movement.</p>
+
+    <div class="demo-card">
+      <h3>// SteppedEase.config(steps) vs linear</h3>
+      <p>Select a step count to see both SteppedEase (amber) and linear (purple) side by side.</p>
+
+      <div class="stage" style="flex-direction: column; gap: 20px;">
+        <div class="step-compare" style="width: 100%; padding: 0 1rem;">
+          <div class="step-col">
+            <span class="step-col-label">SteppedEase</span>
+            <div class="step-ball-wrap">
+              <div class="step-ball" id="step-ball" style="background: var(--accent4); box-shadow: 0 0 12px rgba(255,184,48,0.5);"></div>
+            </div>
+          </div>
+          <div class="step-col">
+            <span class="step-col-label">linear</span>
+            <div class="step-ball-wrap">
+              <div class="step-ball" id="linear-ball" style="background: var(--accent); box-shadow: 0 0 12px rgba(120,80,255,0.5);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-bottom: 1rem;">
+        <label style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Steps:</label>
+        <select class="inline-select" id="step-count">
+          <option value="2">2</option>
+          <option value="4">4</option>
+          <option value="8" selected>8</option>
+          <option value="12">12</option>
+          <option value="20">20</option>
+        </select>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="step-play-btn">play</button>
+        <button class="btn" id="step-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#ball"</span>, {
+  x: <span class="n">trackWidth</span>,
+  duration: <span class="n">1.5</span>,
+  ease: <span class="k">SteppedEase</span>.config(<span class="n">8</span>)
+});</div>
+    </div>
+  </section>
+
+  <!-- EXPOSCALE -->
+  <section id="exposcale">
+    <div class="section-label">04 — ExpoScaleEase</div>
+    <h2>ExpoScale Ease</h2>
+    <p class="section-desc">Designed for scale animations that span very different magnitudes (e.g. 0.5 to 100). It corrects the perceptual "stall" in mid-scale transitions.</p>
+
+    <div class="demo-card">
+      <h3>// ExpoScaleEase.config(start, end)</h3>
+      <p>The box scales from 0.1 to 1 using ExpoScaleEase (left) vs. a standard power3 ease (right). Notice how the expo version feels more even.</p>
+
+      <div class="stage" style="gap: 60px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <div class="expo-box" id="expo-box" style="transform: scale(0.1);">ExpoScale</div>
+          <span style="font-family: var(--mono); font-size: 10px; color: var(--accent2);">ExpoScaleEase</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+          <div class="expo-box" id="expo-box-ref" style="transform: scale(0.1); background: var(--accent3);">power3</div>
+          <span style="font-family: var(--mono); font-size: 10px; color: var(--accent3);">power3.out</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="expo-play-btn">play</button>
+        <button class="btn" id="expo-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#box"</span>, {
+  scale: <span class="n">1</span>,
+  duration: <span class="n">2</span>,
+  ease: <span class="k">ExpoScaleEase</span>.config(<span class="n">0.1</span>, <span class="n">1</span>)
+});</div>
+    </div>
+  </section>
+
+  <!-- GALLERY RACE -->
+  <section id="compare">
+    <div class="section-label">05 — Gallery Race</div>
+    <h2>Ease Race</h2>
+    <p class="section-desc">Five balls race across the stage, each driven by a different EasePack ease. Hit "race!" to launch them all simultaneously.</p>
+
+    <div class="demo-card">
+      <h3>// Five EasePack eases head to head</h3>
+      <p>All balls travel the same distance in 2 seconds. The differences in timing are purely from easing.</p>
+
+      <div class="stage" style="align-items: flex-start; padding: 1.5rem 2rem;">
+        <div class="ball-stage" id="race-stage" style="padding: 0; gap: 20px;">
+          <div class="ball-row">
+            <span class="ball-label">SlowMo</span>
+            <div class="ball-track"><div class="race-ball" id="r1" style="background: var(--accent4); box-shadow: 0 0 10px rgba(255,184,48,0.6);"></div></div>
+          </div>
+          <div class="ball-row">
+            <span class="ball-label">RoughEase</span>
+            <div class="ball-track"><div class="race-ball" id="r2" style="background: var(--accent3); box-shadow: 0 0 10px rgba(255,92,138,0.6);"></div></div>
+          </div>
+          <div class="ball-row">
+            <span class="ball-label">SteppedEase</span>
+            <div class="ball-track"><div class="race-ball" id="r3" style="background: var(--accent2); box-shadow: 0 0 10px rgba(0,229,192,0.6);"></div></div>
+          </div>
+          <div class="ball-row">
+            <span class="ball-label">ExpoScale</span>
+            <div class="ball-track"><div class="race-ball" id="r4" style="background: var(--accent); box-shadow: 0 0 10px rgba(120,80,255,0.6);"></div></div>
+          </div>
+          <div class="ball-row">
+            <span class="ball-label">power2.inOut</span>
+            <div class="ball-track"><div class="race-ball" id="r5" style="background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.4);"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="race-btn">race!</button>
+        <button class="btn" id="race-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.to(<span class="s">"#r1"</span>, { x: <span class="n">end</span>, duration: <span class="n">2</span>, ease: <span class="k">SlowMo</span>.ease.config(<span class="n">0.7</span>, <span class="n">0.7</span>, <span class="n">false</span>) });
+<span class="k">gsap</span>.to(<span class="s">"#r2"</span>, { x: <span class="n">end</span>, duration: <span class="n">2</span>, ease: <span class="s">"rough({strength:1.5,points:20,template:power1})"</span> });
+<span class="k">gsap</span>.to(<span class="s">"#r3"</span>, { x: <span class="n">end</span>, duration: <span class="n">2</span>, ease: <span class="k">SteppedEase</span>.config(<span class="n">8</span>) });
+<span class="k">gsap</span>.to(<span class="s">"#r4"</span>, { x: <span class="n">end</span>, duration: <span class="n">2</span>, ease: <span class="k">ExpoScaleEase</span>.config(<span class="n">0.1</span>, <span class="n">1</span>) });
+<span class="k">gsap</span>.to(<span class="s">"#r5"</span>, { x: <span class="n">end</span>, duration: <span class="n">2</span>, ease: <span class="s">"power2.inOut"</span> });</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>GSAP 3.15 · EasePack Demo · Curtis Nguyen</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/EasePack.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/CustomEase.min.js"></script>
+<script>
+  gsap.registerPlugin(EasePack, CustomEase);
+
+  // ─── Hero ───────────────────────────────────────────────────────────────
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  // ─── Helper: draw ease curve on canvas ──────────────────────────────────
+  function drawEaseCurve(ease, canvasEl, color) {
+    const ctx = canvasEl.getContext('2d');
+    const W = canvasEl.width, H = canvasEl.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      ctx.beginPath(); ctx.moveTo(0, i * H / 4); ctx.lineTo(W, i * H / 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i * W / 4, 0); ctx.lineTo(i * W / 4, H); ctx.stroke();
+    }
+    const parsedEase = gsap.parseEase(ease);
+    ctx.strokeStyle = color || '#ffb830';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = color || '#ffb830';
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const t = i / 100;
+      const v = parsedEase(t);
+      const x = t * W;
+      const y = H - v * H;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // ─── SlowMo ─────────────────────────────────────────────────────────────
+  let slowmoTween = null;
+  const slowmoBall = document.getElementById('slowmo-ball');
+  const canvas = document.getElementById('easeCanvas');
+  const linearSlider = document.getElementById('slomo-linear');
+  const powerSlider  = document.getElementById('slomo-power');
+
+  function getSlowmoEase() {
+    const lr = parseFloat(linearSlider.value);
+    const pw = parseFloat(powerSlider.value);
+    return SlowMo.ease.config(lr, pw, false);
+  }
+
+  function updateSlowmoCode() {
+    const lr = parseFloat(linearSlider.value);
+    const pw = parseFloat(powerSlider.value);
+    drawEaseCurve(getSlowmoEase(), canvas, '#ffb830');
+  }
+
+  linearSlider.addEventListener('input', () => {
+    document.getElementById('slomo-linear-val').textContent = parseFloat(linearSlider.value).toFixed(2);
+    updateSlowmoCode();
+  });
+  powerSlider.addEventListener('input', () => {
+    document.getElementById('slomo-power-val').textContent = parseFloat(powerSlider.value).toFixed(2);
+    updateSlowmoCode();
+  });
+
+  function slowmoReset() {
+    if (slowmoTween) slowmoTween.kill();
+    gsap.set(slowmoBall, { x: 0 });
+  }
+
+  document.getElementById('slowmo-play-btn').addEventListener('click', () => {
+    slowmoReset();
+    const trackWidth = slowmoBall.closest('.stage').querySelector('div').offsetWidth - 28;
+    slowmoTween = gsap.to(slowmoBall, { x: trackWidth, duration: 2, ease: getSlowmoEase() });
+  });
+  document.getElementById('slowmo-reset-btn').addEventListener('click', slowmoReset);
+
+  updateSlowmoCode();
+
+  // ─── RoughEase ──────────────────────────────────────────────────────────
+  let roughTween = null;
+  const roughBall = document.getElementById('rough-ball');
+  const roughStrSlider = document.getElementById('rough-strength');
+  const roughTemplateSelect = document.getElementById('rough-template');
+
+  roughStrSlider.addEventListener('input', () => {
+    document.getElementById('rough-strength-val').textContent = parseFloat(roughStrSlider.value).toFixed(1);
+  });
+
+  function roughReset() {
+    if (roughTween) roughTween.kill();
+    gsap.set(roughBall, { x: 0 });
+  }
+
+  function playRough() {
+    roughReset();
+    const strength = parseFloat(roughStrSlider.value);
+    const template = roughTemplateSelect.value;
+    const trackWidth = roughBall.closest('.stage').querySelector('div').offsetWidth - 28;
+    const easeStr = `rough({strength:${strength}, points:20, template:${template}, randomize:true, clamp:false})`;
+    roughTween = gsap.to(roughBall, { x: trackWidth, duration: 2, ease: easeStr });
+  }
+
+  document.getElementById('rough-play-btn').addEventListener('click', playRough);
+  document.getElementById('rough-random-btn').addEventListener('click', playRough);
+  document.getElementById('rough-reset-btn').addEventListener('click', roughReset);
+
+  // ─── SteppedEase ────────────────────────────────────────────────────────
+  let stepTween = null, linearTween = null;
+  const stepBall   = document.getElementById('step-ball');
+  const linearBall  = document.getElementById('linear-ball');
+  const stepCountSel = document.getElementById('step-count');
+
+  function stepsReset() {
+    if (stepTween) stepTween.kill();
+    if (linearTween) linearTween.kill();
+    gsap.set([stepBall, linearBall], { x: 0 });
+  }
+
+  document.getElementById('step-play-btn').addEventListener('click', () => {
+    stepsReset();
+    const steps = parseInt(stepCountSel.value);
+    const trackWidth = stepBall.closest('.step-ball-wrap').offsetWidth - 24;
+    stepTween   = gsap.to(stepBall,   { x: trackWidth, duration: 1.5, ease: SteppedEase.config(steps) });
+    linearTween = gsap.to(linearBall, { x: trackWidth, duration: 1.5, ease: 'none' });
+  });
+  document.getElementById('step-reset-btn').addEventListener('click', stepsReset);
+
+  // ─── ExpoScaleEase ──────────────────────────────────────────────────────
+  let expoTween = null, expoRefTween = null;
+  const expoBox    = document.getElementById('expo-box');
+  const expoBoxRef = document.getElementById('expo-box-ref');
+
+  function expoReset() {
+    if (expoTween) expoTween.kill();
+    if (expoRefTween) expoRefTween.kill();
+    gsap.set([expoBox, expoBoxRef], { scale: 0.1 });
+  }
+
+  document.getElementById('expo-play-btn').addEventListener('click', () => {
+    expoReset();
+    expoTween    = gsap.to(expoBox,    { scale: 1, duration: 2, ease: ExpoScaleEase.config(0.1, 1) });
+    expoRefTween = gsap.to(expoBoxRef, { scale: 1, duration: 2, ease: 'power3.out' });
+  });
+  document.getElementById('expo-reset-btn').addEventListener('click', expoReset);
+
+  // ─── Gallery Race ────────────────────────────────────────────────────────
+  let raceTweens = [];
+
+  function raceReset() {
+    raceTweens.forEach(t => t.kill());
+    raceTweens = [];
+    gsap.set(['#r1','#r2','#r3','#r4','#r5'], { x: 0 });
+  }
+
+  document.getElementById('race-btn').addEventListener('click', () => {
+    raceReset();
+    const trackWidth = document.querySelector('.ball-track').offsetWidth - 22;
+    raceTweens.push(
+      gsap.to('#r1', { x: trackWidth, duration: 2, ease: SlowMo.ease.config(0.7, 0.7, false) }),
+      gsap.to('#r2', { x: trackWidth, duration: 2, ease: 'rough({strength:1.5,points:20,template:power1,randomize:true,clamp:false})' }),
+      gsap.to('#r3', { x: trackWidth, duration: 2, ease: SteppedEase.config(8) }),
+      gsap.to('#r4', { x: trackWidth, duration: 2, ease: ExpoScaleEase.config(0.1, 1) }),
+      gsap.to('#r5', { x: trackWidth, duration: 2, ease: 'power2.inOut' })
+    );
+  });
+
+  document.getElementById('race-reset-btn').addEventListener('click', raceReset);
+</script>
+</body>
+</html>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixiPlugin — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 0; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .stage canvas { display: block; border-radius: 12px; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html" selected>PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#setup">Setup</a>
+  <a href="#tint">Tint</a>
+  <a href="#blur">Blur</a>
+  <a href="#scale">Scale & Rotation</a>
+  <a href="#timeline">Timeline</a>
+</nav>
+
+<main>
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · PixiPlugin · Demo</div>
+    <h1 id="hero-title">Pixi<br/><span>Plugin</span></h1>
+    <p id="hero-desc">Control Pixi.js DisplayObjects with GSAP's full easing and timeline power. Animate tint, blur, scale, rotation, and alpha seamlessly.</p>
+  </div>
+
+  <!-- Section 1: Setup -->
+  <section id="setup">
+    <div class="section-label">01 — Setup</div>
+    <h2>Setup & Registration</h2>
+    <p class="section-desc">Register PixiPlugin with both GSAP and Pixi.js. Then animate any DisplayObject property using the <code>pixi: {}</code> tween vars object.</p>
+    <div class="demo-card">
+      <h3>basic x, y, alpha animation</h3>
+      <p>A rectangle and circle animate position and alpha on the Pixi stage using GSAP tweens.</p>
+      <div class="stage" id="setupStage"></div>
+      <div class="controls">
+        <button class="btn primary" onclick="runSetupAnim()">animate</button>
+        <button class="btn" onclick="resetSetupAnim()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">registerPlugin</span>(PixiPlugin);
+PixiPlugin.<span class="n">registerPIXI</span>(PIXI);
+
+<span class="k">const</span> app = <span class="n">new</span> PIXI.<span class="n">Application</span>({
+  width: <span class="n">600</span>, height: <span class="n">220</span>,
+  backgroundColor: <span class="n">0x1a1a26</span>, antialias: <span class="n">true</span>
+});
+
+<span class="k">gsap</span>.<span class="n">to</span>(sprite, {
+  <span class="n">pixi</span>: { x: <span class="n">200</span>, y: <span class="n">100</span>, alpha: <span class="n">0.5</span> },
+  duration: <span class="n">1</span>, ease: <span class="s">"power2.out"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 2: Tint -->
+  <section id="tint">
+    <div class="section-label">02 — Tint</div>
+    <h2>Color Tint Animation</h2>
+    <p class="section-desc">Animate the <code>tint</code> property of Pixi DisplayObjects using hex color values. GSAP interpolates colors smoothly between states.</p>
+    <div class="demo-card">
+      <h3>cycling tint colors</h3>
+      <p>Three shapes cycle through a palette of tint colors via a GSAP timeline. Tint values are hex numbers like <code>0xffb830</code>.</p>
+      <div class="stage" id="tintStage"></div>
+      <div class="controls">
+        <button class="btn primary" onclick="runTintAnim()">cycle colors</button>
+        <button class="btn" onclick="resetTintAnim()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">to</span>(shape, {
+  <span class="n">pixi</span>: { tint: <span class="n">0xffb830</span> },
+  duration: <span class="n">0.8</span>, ease: <span class="s">"power1.inOut"</span>
+});
+
+<span class="k">// Chain colors in a timeline
+gsap</span>.<span class="n">timeline</span>()
+  .<span class="n">to</span>(shape, { <span class="n">pixi</span>: { tint: <span class="n">0xff5c8a</span> }, duration: <span class="n">0.6</span> })
+  .<span class="n">to</span>(shape, { <span class="n">pixi</span>: { tint: <span class="n">0x00e5c0</span> }, duration: <span class="n">0.6</span> })
+  .<span class="n">to</span>(shape, { <span class="n">pixi</span>: { tint: <span class="n">0x7850ff</span> }, duration: <span class="n">0.6</span> });</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Blur -->
+  <section id="blur">
+    <div class="section-label">03 — Blur</div>
+    <h2>Blur Filter</h2>
+    <p class="section-desc">Animate the blur filter strength with <code>pixi: { blur: 20 }</code>. The object must have a <code>PIXI.BlurFilter</code> already applied before tweening.</p>
+    <div class="demo-card">
+      <h3>focus / unfocus</h3>
+      <p>A circle with a BlurFilter applied animates between crisp focus and heavy blur using GSAP's pixi property.</p>
+      <div class="stage" id="blurStage"></div>
+      <div class="controls">
+        <button class="btn primary" onclick="focusBlur()">focus</button>
+        <button class="btn" onclick="unfocusBlur()">unfocus</button>
+      </div>
+      <div class="code-snippet"><span class="k">const</span> blurFilter = <span class="n">new</span> PIXI.<span class="n">BlurFilter</span>();
+circle.filters = [blurFilter];
+
+<span class="k">// Unfocus
+gsap</span>.<span class="n">to</span>(circle, {
+  <span class="n">pixi</span>: { blur: <span class="n">20</span> },
+  duration: <span class="n">0.8</span>, ease: <span class="s">"power2.inOut"</span>
+});
+
+<span class="k">// Focus
+gsap</span>.<span class="n">to</span>(circle, {
+  <span class="n">pixi</span>: { blur: <span class="n">0</span> },
+  duration: <span class="n">0.8</span>, ease: <span class="s">"power2.out"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 4: Scale & Rotation -->
+  <section id="scale">
+    <div class="section-label">04 — Scale</div>
+    <h2>Scale & Rotation</h2>
+    <p class="section-desc">Animate <code>scaleX</code>, <code>scaleY</code>, and <code>rotation</code> through the <code>pixi</code> property. Perfect for squash-and-stretch and spin effects.</p>
+    <div class="demo-card">
+      <h3>squash, stretch & spin</h3>
+      <p>A Pixi Graphics rectangle demonstrates squash-and-stretch by animating <code>scaleX</code> and <code>scaleY</code> independently, plus a full rotation.</p>
+      <div class="stage" id="scaleStage"></div>
+      <div class="controls">
+        <button class="btn primary" onclick="doSquash()">squash</button>
+        <button class="btn" onclick="doStretch()">stretch</button>
+        <button class="btn" onclick="doSpin()">spin</button>
+        <button class="btn" onclick="resetScale()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">to</span>(rect, {
+  <span class="n">pixi</span>: { scaleX: <span class="n">2</span>, scaleY: <span class="n">0.5</span> },
+  duration: <span class="n">0.6</span>, ease: <span class="s">"back.out(1.7)"</span>
+});
+
+<span class="k">gsap</span>.<span class="n">to</span>(rect, {
+  <span class="n">pixi</span>: { rotation: Math.<span class="n">PI</span> * <span class="n">2</span> },
+  duration: <span class="n">1</span>, ease: <span class="s">"power2.inOut"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 5: Full timeline -->
+  <section id="timeline">
+    <div class="section-label">05 — Timeline</div>
+    <h2>GSAP Timeline with Pixi</h2>
+    <p class="section-desc">Orchestrate multiple Pixi objects with a GSAP timeline — stagger positions, tint changes, alpha fades, and scale pulses all in sequence.</p>
+    <div class="demo-card">
+      <h3>multi-object choreography</h3>
+      <p>Five colored circles move around the stage with staggered timing, tint shifts, alpha fades, and scale pulses — all driven by one GSAP timeline.</p>
+      <div class="stage" id="timelineStage"></div>
+      <div class="controls">
+        <button class="btn primary" onclick="runTimelineAnim()">run timeline</button>
+        <button class="btn" onclick="resetTimelineAnim()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">const</span> tl = gsap.<span class="n">timeline</span>();
+tl.<span class="n">to</span>(circles, {
+  <span class="n">pixi</span>: { x: <span class="n">200</span>, y: <span class="n">80</span>, tint: <span class="n">0xffb830</span> },
+  duration: <span class="n">0.8</span>, stagger: <span class="n">0.12</span>, ease: <span class="s">"power2.out"</span>
+})
+.<span class="n">to</span>(circles, {
+  <span class="n">pixi</span>: { alpha: <span class="n">0.3</span>, scaleX: <span class="n">1.5</span>, scaleY: <span class="n">1.5</span> },
+  duration: <span class="n">0.5</span>, stagger: <span class="n">0.08</span>
+}, <span class="s">"-=0.3"</span>);</div>
+    </div>
+  </section>
+</main>
+
+<footer>GSAP 3.15 · PixiPlugin · Standalone Demo · No build tools</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@7/dist/pixi.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/PixiPlugin.min.js"></script>
+<script>
+  gsap.registerPlugin(PixiPlugin);
+  PixiPlugin.registerPIXI(PIXI);
+
+  // Hero animation
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  function getStageWidth(el) {
+    return Math.max(el.offsetWidth || 400, 300);
+  }
+
+  // ─────────────────────────────────────────
+  // Section 1: Setup demo
+  // ─────────────────────────────────────────
+  var setupApp, setupRect, setupCircle;
+  (function() {
+    var stageEl = document.getElementById('setupStage');
+    var W = getStageWidth(stageEl), H = 220;
+    setupApp = new PIXI.Application({ width: W, height: H, backgroundColor: 0x1a1a26, antialias: true });
+    setupApp.view.style.width = '100%';
+    setupApp.view.style.height = H + 'px';
+    stageEl.appendChild(setupApp.view);
+
+    setupRect = new PIXI.Graphics();
+    setupRect.beginFill(0x7850ff, 0.8);
+    setupRect.drawRoundedRect(-40, -25, 80, 50, 8);
+    setupRect.endFill();
+    setupRect.x = 80;
+    setupRect.y = H / 2;
+    setupApp.stage.addChild(setupRect);
+
+    setupCircle = new PIXI.Graphics();
+    setupCircle.beginFill(0x00e5c0, 0.8);
+    setupCircle.drawCircle(0, 0, 30);
+    setupCircle.endFill();
+    setupCircle.x = W - 80;
+    setupCircle.y = H / 2;
+    setupApp.stage.addChild(setupCircle);
+  })();
+
+  function runSetupAnim() {
+    gsap.to(setupRect, { pixi: { x: 200, y: 80, alpha: 0.5 }, duration: 1, ease: 'power2.out' });
+    gsap.to(setupCircle, { pixi: { x: setupApp.renderer.width - 140, y: 150, alpha: 0.4 }, duration: 1, ease: 'power2.out', delay: 0.2 });
+  }
+
+  function resetSetupAnim() {
+    var W = setupApp.renderer.width, H = 220;
+    gsap.to(setupRect, { pixi: { x: 80, y: H / 2, alpha: 1 }, duration: 0.6, ease: 'back.out(1.4)' });
+    gsap.to(setupCircle, { pixi: { x: W - 80, y: H / 2, alpha: 1 }, duration: 0.6, ease: 'back.out(1.4)', delay: 0.1 });
+  }
+
+  // ─────────────────────────────────────────
+  // Section 2: Tint demo
+  // ─────────────────────────────────────────
+  var tintApp, tintShapes = [];
+  (function() {
+    var stageEl = document.getElementById('tintStage');
+    var W = getStageWidth(stageEl), H = 220;
+    tintApp = new PIXI.Application({ width: W, height: H, backgroundColor: 0x1a1a26, antialias: true });
+    tintApp.view.style.width = '100%';
+    tintApp.view.style.height = H + 'px';
+    stageEl.appendChild(tintApp.view);
+
+    var positions = [W * 0.2, W * 0.5, W * 0.8];
+    var colors = [0x7850ff, 0x00e5c0, 0xff5c8a];
+    var shapes = ['rect', 'circle', 'rect'];
+
+    positions.forEach(function(px, i) {
+      var g = new PIXI.Graphics();
+      g.beginFill(colors[i], 0.9);
+      if (shapes[i] === 'circle') {
+        g.drawCircle(0, 0, 35);
+      } else {
+        g.drawRoundedRect(-35, -35, 70, 70, 10);
+      }
+      g.endFill();
+      g.x = px;
+      g.y = H / 2;
+      tintApp.stage.addChild(g);
+      tintShapes.push(g);
+    });
+  })();
+
+  var tintColors = [
+    [0xff5c8a, 0xffb830, 0x7850ff],
+    [0x00e5c0, 0x7850ff, 0xffb830],
+    [0xffb830, 0xff5c8a, 0x00e5c0],
+    [0x7850ff, 0x00e5c0, 0xff5c8a]
+  ];
+  var tintStep = 0;
+  var tintTl = null;
+
+  function runTintAnim() {
+    if (tintTl) tintTl.kill();
+    var colors = tintColors[tintStep % tintColors.length];
+    tintStep++;
+    tintTl = gsap.timeline();
+    tintShapes.forEach(function(shape, i) {
+      tintTl.to(shape, { pixi: { tint: colors[i] }, duration: 0.6, ease: 'power1.inOut' }, i * 0.15);
+    });
+  }
+
+  function resetTintAnim() {
+    tintStep = 0;
+    if (tintTl) tintTl.kill();
+    var origColors = [0x7850ff, 0x00e5c0, 0xff5c8a];
+    tintShapes.forEach(function(shape, i) {
+      gsap.to(shape, { pixi: { tint: origColors[i] }, duration: 0.4, ease: 'power1.out' });
+    });
+  }
+
+  // ─────────────────────────────────────────
+  // Section 3: Blur demo
+  // ─────────────────────────────────────────
+  var blurApp, blurCircle, blurFilter;
+  (function() {
+    var stageEl = document.getElementById('blurStage');
+    var W = getStageWidth(stageEl), H = 220;
+    blurApp = new PIXI.Application({ width: W, height: H, backgroundColor: 0x1a1a26, antialias: true });
+    blurApp.view.style.width = '100%';
+    blurApp.view.style.height = H + 'px';
+    stageEl.appendChild(blurApp.view);
+
+    blurCircle = new PIXI.Graphics();
+    blurCircle.beginFill(0x00e5c0, 0.9);
+    blurCircle.drawCircle(0, 0, 55);
+    blurCircle.endFill();
+    blurCircle.x = W / 2;
+    blurCircle.y = H / 2;
+
+    blurFilter = new PIXI.BlurFilter();
+    blurFilter.blur = 0;
+    blurCircle.filters = [blurFilter];
+
+    blurApp.stage.addChild(blurCircle);
+  })();
+
+  function unfocusBlur() {
+    gsap.to(blurCircle, { pixi: { blur: 20 }, duration: 0.8, ease: 'power2.inOut' });
+  }
+
+  function focusBlur() {
+    gsap.to(blurCircle, { pixi: { blur: 0 }, duration: 0.8, ease: 'power2.out' });
+  }
+
+  // ─────────────────────────────────────────
+  // Section 4: Scale & Rotation demo
+  // ─────────────────────────────────────────
+  var scaleApp, scaleRect;
+  (function() {
+    var stageEl = document.getElementById('scaleStage');
+    var W = getStageWidth(stageEl), H = 220;
+    scaleApp = new PIXI.Application({ width: W, height: H, backgroundColor: 0x1a1a26, antialias: true });
+    scaleApp.view.style.width = '100%';
+    scaleApp.view.style.height = H + 'px';
+    stageEl.appendChild(scaleApp.view);
+
+    scaleRect = new PIXI.Graphics();
+    scaleRect.beginFill(0xffb830, 0.85);
+    scaleRect.drawRoundedRect(-45, -30, 90, 60, 10);
+    scaleRect.endFill();
+    scaleRect.x = W / 2;
+    scaleRect.y = H / 2;
+    scaleApp.stage.addChild(scaleRect);
+  })();
+
+  function doSquash() {
+    gsap.to(scaleRect, { pixi: { scaleX: 2, scaleY: 0.5 }, duration: 0.6, ease: 'back.out(1.7)' });
+  }
+
+  function doStretch() {
+    gsap.to(scaleRect, { pixi: { scaleX: 0.5, scaleY: 2 }, duration: 0.6, ease: 'back.out(1.7)' });
+  }
+
+  function doSpin() {
+    gsap.to(scaleRect, { pixi: { rotation: scaleRect.rotation + Math.PI * 2 }, duration: 1, ease: 'power2.inOut' });
+  }
+
+  function resetScale() {
+    gsap.to(scaleRect, { pixi: { scaleX: 1, scaleY: 1, rotation: 0 }, duration: 0.6, ease: 'back.out(1.4)' });
+  }
+
+  // ─────────────────────────────────────────
+  // Section 5: Full Timeline demo
+  // ─────────────────────────────────────────
+  var tlApp, tlCircles = [], tlOrigPositions = [];
+  (function() {
+    var stageEl = document.getElementById('timelineStage');
+    var W = getStageWidth(stageEl), H = 220;
+    tlApp = new PIXI.Application({ width: W, height: H, backgroundColor: 0x1a1a26, antialias: true });
+    tlApp.view.style.width = '100%';
+    tlApp.view.style.height = H + 'px';
+    stageEl.appendChild(tlApp.view);
+
+    var colors = [0x7850ff, 0x00e5c0, 0xff5c8a, 0xffb830, 0x4488ff];
+    var count = 5;
+    for (var i = 0; i < count; i++) {
+      var g = new PIXI.Graphics();
+      g.beginFill(colors[i], 0.85);
+      g.drawCircle(0, 0, 22);
+      g.endFill();
+      var px = W * (i + 1) / (count + 1);
+      var py = H / 2;
+      g.x = px;
+      g.y = py;
+      tlOrigPositions.push({ x: px, y: py });
+      tlApp.stage.addChild(g);
+      tlCircles.push(g);
+    }
+  })();
+
+  var tlMain = null;
+
+  function runTimelineAnim() {
+    if (tlMain) tlMain.kill();
+    var W = tlApp.renderer.width, H = 220;
+    var targetPositions = [
+      { x: W * 0.15, y: 50 },
+      { x: W * 0.35, y: 170 },
+      { x: W * 0.5,  y: 50 },
+      { x: W * 0.65, y: 170 },
+      { x: W * 0.85, y: 50 }
+    ];
+    var tintCycle = [0xffb830, 0xff5c8a, 0x00e5c0, 0x7850ff, 0x4488ff];
+
+    tlMain = gsap.timeline();
+    tlCircles.forEach(function(c, i) {
+      tlMain.to(c, {
+        pixi: { x: targetPositions[i].x, y: targetPositions[i].y, tint: tintCycle[i], scaleX: 1.5, scaleY: 1.5 },
+        duration: 0.7, ease: 'power2.out'
+      }, i * 0.12);
+    });
+    tlMain.to(tlCircles, {
+      pixi: { alpha: 0.3 },
+      duration: 0.4, stagger: 0.08, ease: 'power1.inOut'
+    }, '-=0.2');
+    tlMain.to(tlCircles, {
+      pixi: { alpha: 1, scaleX: 1, scaleY: 1 },
+      duration: 0.4, stagger: 0.08, ease: 'power1.inOut'
+    });
+  }
+
+  function resetTimelineAnim() {
+    if (tlMain) tlMain.kill();
+    tlCircles.forEach(function(c, i) {
+      gsap.to(c, {
+        pixi: {
+          x: tlOrigPositions[i].x,
+          y: tlOrigPositions[i].y,
+          alpha: 1, scaleX: 1, scaleY: 1,
+          tint: [0x7850ff, 0x00e5c0, 0xff5c8a, 0xffb830, 0x4488ff][i]
+        },
+        duration: 0.5, ease: 'back.out(1.4)', delay: i * 0.05
+      });
+    });
+  }
+</script>
+</body>
+</html>

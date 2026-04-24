@@ -52,7 +52,20 @@
     border-right: 1px solid var(--border);
     transition: color 0.2s, background 0.2s;
   }
-  nav a:first-child { border-left: 1px solid var(--border); }
+  nav a:first-of-type { border-left: 1px solid var(--border); }
+  .demo-switcher {
+    font-family: var(--mono); font-size: 11px;
+    background: rgba(120,80,255,0.12); color: var(--text);
+    border: 1px solid var(--border-accent); border-radius: 6px;
+    padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+    flex-shrink: 0; cursor: pointer; outline: none;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    transition: border-color 0.15s, background-color 0.15s;
+  }
+  .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+  .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
   nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
 
   /* LAYOUT */
@@ -313,6 +326,27 @@
 <body>
 
 <nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html" selected>ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
   <a href="#basic">Basic Trigger</a>
   <a href="#scrub">Scrub</a>
   <a href="#pin">Pin</a>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InertiaPlugin — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* ── Demo-specific ── */
+    .drag-box {
+      width: 70px; height: 70px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.8);
+      cursor: grab; user-select: none;
+      box-shadow: 0 4px 20px rgba(120,80,255,0.35);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .drag-box:active { cursor: grabbing; }
+    .stage-drag { cursor: crosshair; }
+
+    /* Grid stage */
+    .grid-stage {
+      background-image:
+        var(--surface2) /*base*/,
+        repeating-linear-gradient(rgba(120,80,255,0.08) 0 1px, transparent 1px 80px),
+        repeating-linear-gradient(90deg, rgba(120,80,255,0.08) 0 1px, transparent 1px 80px);
+      background-color: var(--surface2);
+    }
+    .snap-box {
+      width: 60px; height: 60px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent4));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 9px; color: rgba(0,0,0,0.7);
+      cursor: grab; user-select: none;
+      box-shadow: 0 4px 20px rgba(0,229,192,0.3);
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* Track */
+    .track-ball {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent3), var(--accent4));
+      box-shadow: 0 2px 16px rgba(255,92,138,0.4);
+      position: absolute;
+      left: 40px;
+      top: 50%; transform: translateY(-50%);
+    }
+    .vel-display {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .vel-display span { color: var(--accent4); }
+
+    /* Resistance race */
+    .resist-stage {
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: stretch;
+      padding: 16px 20px;
+      gap: 0;
+    }
+    .resist-lane {
+      display: flex;
+      align-items: center;
+      height: 60px;
+      position: relative;
+    }
+    .resist-ball {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      position: absolute;
+      left: 0;
+      top: 50%; transform: translateY(-50%);
+    }
+    .resist-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      position: absolute;
+      right: 0;
+      white-space: nowrap;
+    }
+
+    /* Min/max slider */
+    .slider-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      position: absolute;
+      bottom: 40px;
+      left: 0; right: 0;
+      margin: 0 16px;
+      width: calc(100% - 32px);
+    }
+    .slider-handle {
+      width: 48px; height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      box-shadow: 0 2px 16px rgba(120,80,255,0.4);
+      position: absolute;
+      bottom: 24px;
+      left: 16px;
+      cursor: ew-resize;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.7);
+    }
+    .bound-marker {
+      position: absolute;
+      bottom: 16px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* Dial */
+    .dial-stage { flex-direction: column; gap: 8px; }
+    .dial-el {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 3px solid var(--border-accent);
+      position: relative;
+      cursor: grab;
+      box-shadow: 0 0 20px rgba(120,80,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dial-el::after {
+      content: '';
+      position: absolute;
+      top: 8px; left: 50%;
+      transform: translateX(-50%);
+      width: 4px; height: 20px;
+      background: var(--accent4);
+      border-radius: 2px;
+    }
+    .dial-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html" selected>InertiaPlugin</option>
+  </select>
+  <a href="#draggable">Draggable</a>
+  <a href="#snap">Snap</a>
+  <a href="#track">Track</a>
+  <a href="#resistance">Resistance</a>
+  <a href="#minmax">Min/Max</a>
+  <a href="#rotation">Rotation</a>
+</nav>
+
+<main>
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · InertiaPlugin · Demo</div>
+    <h1 id="hero-title">Inertia<br/><span>Plugin</span></h1>
+    <p id="hero-desc">Physics-based momentum animations — drag and release with natural glide, snap to grids, track live velocity, and constrain motion with min/max bounds.</p>
+  </div>
+
+  <!-- Section 1: Draggable with inertia -->
+  <section id="draggable">
+    <div class="section-label">01 — InertiaPlugin</div>
+    <h2>Draggable with Inertia</h2>
+    <p class="section-desc">Drag the box and release it — it glides to a stop with natural momentum. InertiaPlugin automatically tracks velocity and decelerates smoothly.</p>
+
+    <div class="demo-card">
+      <h3>// Draggable.create with inertia: true</h3>
+      <p>Drag fast for long glide, slow for short. The box is bounded to the stage so it never escapes.</p>
+      <div class="stage stage-drag" id="stage-drag" style="min-height:240px;">
+        <div class="drag-box" id="drag-box">drag me</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="btn-drag-reset">reset</button>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">← throw it!</span>
+      </div>
+      <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#drag-box"</span>, {
+  <span class="n">type</span>: <span class="s">"x,y"</span>,
+  <span class="n">bounds</span>: <span class="s">"#stage-drag"</span>,
+  <span class="n">inertia</span>: <span class="n">true</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 2: Snap to grid -->
+  <section id="snap">
+    <div class="section-label">02 — InertiaPlugin</div>
+    <h2>Snap to Grid</h2>
+    <p class="section-desc">After releasing the box, it decelerates and snaps to the nearest 80px grid intersection. The grid is visible as a reference.</p>
+
+    <div class="demo-card">
+      <h3>// snap function rounds to nearest grid cell</h3>
+      <p>Throw the box across the grid — it will always land on a grid point. Useful for puzzle games, layout tools, or tile-based UIs.</p>
+      <div class="stage stage-drag" id="stage-snap" style="min-height:280px;
+        background-image: repeating-linear-gradient(rgba(120,80,255,0.07) 0 1px, transparent 1px 80px), repeating-linear-gradient(90deg, rgba(120,80,255,0.07) 0 1px, transparent 1px 80px);
+        background-color: var(--surface2);
+        background-size: 80px 80px;">
+        <div class="snap-box" id="snap-box">snap</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="btn-snap-reset">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#snap-box"</span>, {
+  <span class="n">type</span>: <span class="s">"x,y"</span>,
+  <span class="n">bounds</span>: <span class="s">"#stage-snap"</span>,
+  <span class="n">inertia</span>: <span class="n">true</span>,
+  <span class="n">snap</span>: {
+    <span class="n">x</span>: v => Math.round(v / <span class="n">80</span>) * <span class="n">80</span>,
+    <span class="n">y</span>: v => Math.round(v / <span class="n">80</span>) * <span class="n">80</span>
+  }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Velocity tracking -->
+  <section id="track">
+    <div class="section-label">03 — InertiaPlugin</div>
+    <h2>Velocity Tracking</h2>
+    <p class="section-desc">Track a moving element's live velocity with <code>InertiaPlugin.track()</code>, then use <code>"auto"</code> to continue that exact velocity when handing off control.</p>
+
+    <div class="demo-card">
+      <h3>// InertiaPlugin.track() then inertia: { x: "auto" }</h3>
+      <p>The ball bounces back and forth. Click "release!" to let InertiaPlugin capture its current velocity and coast naturally to a stop.</p>
+      <div class="stage" id="stage-track" style="min-height:120px;overflow:visible;">
+        <div class="track-ball" id="track-ball"></div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-track-release">release!</button>
+        <button class="btn" id="btn-track-restart">restart</button>
+        <div class="vel-display">velocity: <span id="vel-readout">0</span> px/s</div>
+      </div>
+      <div class="code-snippet"><span class="k">InertiaPlugin</span>.track(ball, <span class="s">"x"</span>);
+<span class="c">// ... ball animates back and forth ...</span>
+<span class="c">// on release:</span>
+gsap.to(ball, {
+  <span class="n">inertia</span>: { <span class="n">x</span>: <span class="s">"auto"</span>, <span class="n">min</span>: 0, <span class="n">max</span>: stageWidth }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 4: Resistance comparison -->
+  <section id="resistance">
+    <div class="section-label">04 — InertiaPlugin</div>
+    <h2>Resistance Comparison</h2>
+    <p class="section-desc">Three balls launched with identical velocity (1000 px/s) but different <code>resistance</code> values. Higher resistance = stops sooner.</p>
+
+    <div class="demo-card">
+      <h3>// resistance: 50 | 200 | 800</h3>
+      <p>Resistance controls deceleration force. Low = slides like ice. High = stops like sand. Watch how far each ball travels.</p>
+      <div class="stage resist-stage" id="stage-resist" style="min-height:220px;">
+        <div class="resist-lane">
+          <div class="resist-ball" id="resist-a" style="background:linear-gradient(135deg,var(--accent2),var(--accent));"></div>
+          <div class="resist-label">resistance: 50 (slides far)</div>
+        </div>
+        <div class="resist-lane">
+          <div class="resist-ball" id="resist-b" style="background:linear-gradient(135deg,var(--accent4),var(--accent3));"></div>
+          <div class="resist-label">resistance: 200 (medium)</div>
+        </div>
+        <div class="resist-lane">
+          <div class="resist-ball" id="resist-c" style="background:linear-gradient(135deg,var(--accent3),var(--accent));"></div>
+          <div class="resist-label">resistance: 800 (stops fast)</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-resist-race">race!</button>
+        <button class="btn" id="btn-resist-reset">reset</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#resist-a"</span>, { <span class="n">inertia</span>: { <span class="n">x</span>: { <span class="n">velocity</span>: <span class="n">1000</span>, <span class="n">resistance</span>: <span class="n">50</span>  } } });
+gsap.to(<span class="s">"#resist-b"</span>, { <span class="n">inertia</span>: { <span class="n">x</span>: { <span class="n">velocity</span>: <span class="n">1000</span>, <span class="n">resistance</span>: <span class="n">200</span> } } });
+gsap.to(<span class="s">"#resist-c"</span>, { <span class="n">inertia</span>: { <span class="n">x</span>: { <span class="n">velocity</span>: <span class="n">1000</span>, <span class="n">resistance</span>: <span class="n">800</span> } } });</div>
+    </div>
+  </section>
+
+  <!-- Section 5: Min/max constraints -->
+  <section id="minmax">
+    <div class="section-label">05 — InertiaPlugin</div>
+    <h2>Min / Max Constraints</h2>
+    <p class="section-desc">Inertia can be bounded with <code>min</code> and <code>max</code> values. The element glides but clamps within the specified range.</p>
+
+    <div class="demo-card">
+      <h3>// inertia: { x: { velocity, min: 0, max: 400 } }</h3>
+      <p>Click "throw left" or "throw right" to launch the handle with a velocity. It glides and stops within the track bounds — never escaping.</p>
+      <div class="stage" id="stage-minmax" style="min-height:140px;flex-direction:column;gap:0;">
+        <div style="width:calc(100% - 32px);height:6px;background:rgba(255,255,255,0.06);border-radius:3px;position:relative;margin:0 16px;">
+          <div style="position:absolute;left:-6px;top:50%;transform:translateY(-50%);width:6px;height:20px;background:var(--border-accent);border-radius:3px;"></div>
+          <div style="position:absolute;right:-6px;top:50%;transform:translateY(-50%);width:6px;height:20px;background:var(--border-accent);border-radius:3px;"></div>
+        </div>
+        <div id="minmax-handle" style="
+          width: 56px; height: 56px; border-radius: 10px;
+          background: linear-gradient(135deg, var(--accent), var(--accent3));
+          box-shadow: 0 2px 16px rgba(120,80,255,0.4);
+          position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+          display: flex; align-items: center; justify-content: center;
+          font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.7);
+          cursor: ew-resize;">slide</div>
+        <div style="position:absolute;bottom:8px;left:16px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.18);">min: 0</div>
+        <div style="position:absolute;bottom:8px;right:16px;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.18);">max: 400</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-mm-right">throw right →</button>
+        <button class="btn primary" id="btn-mm-left">← throw left</button>
+        <button class="btn" id="btn-mm-reset">reset</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#minmax-handle"</span>, {
+  <span class="n">inertia</span>: {
+    <span class="n">x</span>: { <span class="n">velocity</span>: <span class="n">800</span>, <span class="n">min</span>: <span class="n">0</span>, <span class="n">max</span>: <span class="n">400</span> }
+  }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 6: Rotation inertia -->
+  <section id="rotation">
+    <div class="section-label">06 — InertiaPlugin</div>
+    <h2>Rotation Inertia</h2>
+    <p class="section-desc">A dial you can spin with your mouse. After releasing, it continues rotating and gradually slows to a stop — like a real physical dial.</p>
+
+    <div class="demo-card">
+      <h3>// Draggable type: "rotation" with inertia: true</h3>
+      <p>Grab the dial and spin it quickly. Momentum carries it further after release, decelerating naturally. Drag slowly for a gentle stop.</p>
+      <div class="stage dial-stage" id="stage-dial" style="min-height:220px;">
+        <div class="dial-el" id="dial"></div>
+        <div class="dial-label" id="dial-angle-label">rotation: 0°</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-dial-spin">spin!</button>
+        <button class="btn" id="btn-dial-reset">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">Draggable</span>.create(<span class="s">"#dial"</span>, {
+  <span class="n">type</span>: <span class="s">"rotation"</span>,
+  <span class="n">inertia</span>: <span class="n">true</span>,
+  <span class="n">onDrag</span>: function() {
+    label.textContent = <span class="s">`rotation: ${Math.round(this.rotation)}°`</span>;
+  }
+});</div>
+    </div>
+  </section>
+</main>
+
+<footer>GSAP 3.15 · InertiaPlugin Demo · Built with vanilla HTML &amp; JS</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/InertiaPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/Draggable.min.js"></script>
+<script>
+  gsap.registerPlugin(InertiaPlugin, Draggable);
+
+  /* ── Hero entrance ── */
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  /* ── Section 1: Draggable with inertia ── */
+  const dragBox = document.getElementById('drag-box');
+  const dragInst = Draggable.create(dragBox, {
+    type: 'x,y',
+    bounds: '#stage-drag',
+    inertia: true
+  })[0];
+
+  document.getElementById('btn-drag-reset').addEventListener('click', () => {
+    gsap.to(dragBox, { x: 0, y: 0, duration: 0.6, ease: 'back.out(1.5)' });
+  });
+
+  /* ── Section 2: Snap to grid ── */
+  const snapBox = document.getElementById('snap-box');
+  const GRID = 80;
+
+  Draggable.create(snapBox, {
+    type: 'x,y',
+    bounds: '#stage-snap',
+    inertia: true,
+    snap: {
+      x: v => Math.round(v / GRID) * GRID,
+      y: v => Math.round(v / GRID) * GRID
+    }
+  });
+
+  document.getElementById('btn-snap-reset').addEventListener('click', () => {
+    gsap.to(snapBox, { x: 0, y: 0, duration: 0.6, ease: 'back.out(1.5)' });
+  });
+
+  /* ── Section 3: Velocity tracking ── */
+  const trackBall = document.getElementById('track-ball');
+  const velReadout = document.getElementById('vel-readout');
+  const stageTrack = document.getElementById('stage-track');
+
+  // Track x velocity of the ball
+  InertiaPlugin.track(trackBall, 'x');
+
+  let bounceTl = null;
+  let velInterval = null;
+
+  function startBounce() {
+    if (bounceTl) bounceTl.kill();
+    const stageW = stageTrack.offsetWidth;
+    const maxX = stageW - 60;
+
+    bounceTl = gsap.timeline({ repeat: -1, yoyo: true });
+    bounceTl.to(trackBall, { x: maxX, duration: 1.2, ease: 'power1.inOut' });
+
+    // Update velocity display
+    if (velInterval) clearInterval(velInterval);
+    velInterval = setInterval(() => {
+      const velData = InertiaPlugin.getVelocity(trackBall, 'x');
+      velReadout.textContent = Math.round(velData || 0);
+    }, 60);
+  }
+
+  startBounce();
+
+  document.getElementById('btn-track-release').addEventListener('click', () => {
+    if (bounceTl) { bounceTl.kill(); bounceTl = null; }
+    if (velInterval) { clearInterval(velInterval); velInterval = null; }
+
+    const stageW = stageTrack.offsetWidth;
+    gsap.to(trackBall, {
+      inertia: {
+        x: { velocity: 'auto', min: 0, max: stageW - 60 }
+      },
+      onUpdate: function() {
+        velReadout.textContent = Math.round(InertiaPlugin.getVelocity(trackBall, 'x') || 0);
+      },
+      onComplete: () => { velReadout.textContent = 0; }
+    });
+  });
+
+  document.getElementById('btn-track-restart').addEventListener('click', () => {
+    gsap.killTweensOf(trackBall);
+    gsap.set(trackBall, { x: 0 });
+    startBounce();
+  });
+
+  /* ── Section 4: Resistance comparison ── */
+  const resistBalls = [
+    { id: '#resist-a', resistance: 50 },
+    { id: '#resist-b', resistance: 200 },
+    { id: '#resist-c', resistance: 800 },
+  ];
+
+  // We use a proxy object per ball since InertiaPlugin works on object x properties
+  const resistProxies = resistBalls.map(() => ({ x: 0 }));
+  const resistEls = resistBalls.map(b => document.querySelector(b.id));
+
+  // Figure out stage width for bounds
+  function getResistMax() {
+    const stage = document.getElementById('stage-resist');
+    return stage.offsetWidth - 52;
+  }
+
+  document.getElementById('btn-resist-race').addEventListener('click', () => {
+    resistBalls.forEach(({ id, resistance }) => {
+      gsap.set(id, { x: 0 });
+    });
+    const maxX = getResistMax();
+    resistBalls.forEach(({ id, resistance }) => {
+      gsap.to(id, {
+        inertia: {
+          x: { velocity: 1000, resistance: resistance, max: maxX, min: 0 }
+        }
+      });
+    });
+  });
+
+  document.getElementById('btn-resist-reset').addEventListener('click', () => {
+    resistBalls.forEach(({ id }) => {
+      gsap.killTweensOf(id);
+      gsap.to(id, { x: 0, duration: 0.5, ease: 'power2.out' });
+    });
+  });
+
+  /* ── Section 5: Min/Max ── */
+  const mmHandle = document.getElementById('minmax-handle');
+  const MM_MIN = 0;
+  const MM_MAX = 400;
+
+  // Also make it draggable with bounds
+  Draggable.create(mmHandle, {
+    type: 'x',
+    bounds: { minX: MM_MIN, maxX: MM_MAX },
+    inertia: true
+  });
+
+  document.getElementById('btn-mm-right').addEventListener('click', () => {
+    const curX = gsap.getProperty(mmHandle, 'x');
+    gsap.to(mmHandle, {
+      inertia: { x: { velocity: 800, min: MM_MIN, max: MM_MAX } }
+    });
+  });
+
+  document.getElementById('btn-mm-left').addEventListener('click', () => {
+    gsap.to(mmHandle, {
+      inertia: { x: { velocity: -800, min: MM_MIN, max: MM_MAX } }
+    });
+  });
+
+  document.getElementById('btn-mm-reset').addEventListener('click', () => {
+    gsap.killTweensOf(mmHandle);
+    gsap.to(mmHandle, { x: 0, duration: 0.5, ease: 'back.out(1.5)' });
+  });
+
+  /* ── Section 6: Rotation inertia ── */
+  const dial = document.getElementById('dial');
+  const dialLabel = document.getElementById('dial-angle-label');
+
+  const dialDraggable = Draggable.create(dial, {
+    type: 'rotation',
+    inertia: true,
+    onDrag: function() {
+      dialLabel.textContent = 'rotation: ' + Math.round(this.rotation) + '\u00b0';
+    },
+    onThrowUpdate: function() {
+      dialLabel.textContent = 'rotation: ' + Math.round(this.rotation) + '\u00b0';
+    }
+  })[0];
+
+  document.getElementById('btn-dial-spin').addEventListener('click', () => {
+    gsap.to(dial, {
+      inertia: { rotation: { velocity: 720 } },
+      onUpdate: function() {
+        dialLabel.textContent = 'rotation: ' + Math.round(gsap.getProperty(dial, 'rotation')) + '\u00b0';
+      }
+    });
+  });
+
+  document.getElementById('btn-dial-reset').addEventListener('click', () => {
+    gsap.killTweensOf(dial);
+    gsap.to(dial, {
+      rotation: 0, duration: 0.6, ease: 'power2.out',
+      onUpdate: function() {
+        dialLabel.textContent = 'rotation: ' + Math.round(gsap.getProperty(dial, 'rotation')) + '\u00b0';
+      },
+      onComplete: () => { dialLabel.textContent = 'rotation: 0\u00b0'; }
+    });
+  });
+</script>
+</body>
+</html>

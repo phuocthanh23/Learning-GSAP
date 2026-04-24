@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScrambleText — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* ── Demo-specific ── */
+    .scramble-heading {
+      font-family: var(--mono);
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+    .chars-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+    .chars-cell {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .chars-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--accent4);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .chars-text {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent2);
+      min-height: 20px;
+    }
+    .reveal-grid {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      justify-content: center;
+    }
+    .reveal-cell {
+      flex: 1;
+      max-width: 280px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    .reveal-cell .rlabel {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .reveal-text {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    .speed-control label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .speed-control input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+    .speed-val {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent4);
+      min-width: 32px;
+    }
+    .new-char { color: var(--accent2) !important; }
+    .newclass-text {
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.8;
+    }
+    .loop-display {
+      font-family: var(--mono);
+      font-size: clamp(1rem, 4vw, 1.6rem);
+      color: var(--accent2);
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .glitch-title {
+      font-family: var(--mono);
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 700;
+      color: var(--accent3);
+      letter-spacing: -1px;
+      text-align: center;
+      text-shadow: 0 0 20px rgba(255,92,138,0.5);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html" selected>ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#basic">Basic</a>
+  <a href="#chars">Char Sets</a>
+  <a href="#reveal">Reveal Delay</a>
+  <a href="#speed">Speed</a>
+  <a href="#newclass">NewClass</a>
+  <a href="#loop">Loop</a>
+  <a href="#glitch">Glitch</a>
+</nav>
+
+<main>
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · ScrambleText · Demo</div>
+    <h1 id="hero-title">Scramble<br/><span>Text</span></h1>
+    <p id="hero-desc">Animate text through randomized character scrambling — create hacker terminals, glitch effects, and dynamic text reveals with full control over character sets and timing.</p>
+  </div>
+
+  <!-- Section 1: Basic -->
+  <section id="basic">
+    <div class="section-label">01 — ScrambleText</div>
+    <h2>Basic Text Swap</h2>
+    <p class="section-desc">Cycle through messages with a satisfying scramble transition. Characters randomize before resolving to the new text.</p>
+
+    <div class="demo-card">
+      <h3>// chars: "upperCase" — uppercase scramble</h3>
+      <p>Each click picks the next message in the cycle and scrambles into it. The <code>revealDelay</code> controls how long characters scramble before resolving.</p>
+      <div class="stage">
+        <div class="scramble-heading" id="basic-text">Click to scramble</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-basic-scramble">scramble!</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#basic-text"</span>, {
+  <span class="n">duration</span>: 1.2,
+  <span class="n">scrambleText</span>: {
+    <span class="n">text</span>: <span class="s">"New message here"</span>,
+    <span class="n">chars</span>: <span class="s">"upperCase"</span>,
+    <span class="n">revealDelay</span>: 0.4,
+    <span class="n">speed</span>: 0.5
+  }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 2: Char sets -->
+  <section id="chars">
+    <div class="section-label">02 — ScrambleText</div>
+    <h2>Custom Character Sets</h2>
+    <p class="section-desc">The <code>chars</code> option defines what scramble characters look like. Different sets create completely different aesthetics.</p>
+
+    <div class="demo-card">
+      <h3>// four different chars presets</h3>
+      <p>Uppercase = clean, binary = hacker, symbols = glitch, Japanese = exotic. All fire simultaneously on "scramble all".</p>
+      <div class="stage" style="align-items:stretch;">
+        <div class="chars-grid">
+          <div class="chars-cell">
+            <div class="chars-label">upperCase</div>
+            <div class="chars-text" id="chars-upper">HELLO WORLD</div>
+          </div>
+          <div class="chars-cell">
+            <div class="chars-label">binary "01"</div>
+            <div class="chars-text" id="chars-binary">10110101</div>
+          </div>
+          <div class="chars-cell">
+            <div class="chars-label">symbols</div>
+            <div class="chars-text" id="chars-symbols">!@#$% GLITCH</div>
+          </div>
+          <div class="chars-cell">
+            <div class="chars-label">japanese</div>
+            <div class="chars-text" id="chars-japanese">あいうえお</div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-chars-all">scramble all</button>
+        <button class="btn" id="btn-chars-reset">reset text</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#chars-binary"</span>, {
+  <span class="n">duration</span>: 1.5,
+  <span class="n">scrambleText</span>: { <span class="n">text</span>: <span class="s">"ACCESS GRANTED"</span>, <span class="n">chars</span>: <span class="s">"01"</span>, <span class="n">speed</span>: 0.4 }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Reveal Delay -->
+  <section id="reveal">
+    <div class="section-label">03 — ScrambleText</div>
+    <h2>revealDelay Effect</h2>
+    <p class="section-desc"><code>revealDelay</code> controls how long a character scrambles before showing its real value. Low = resolves early, high = scrambles longer.</p>
+
+    <div class="demo-card">
+      <h3>// revealDelay: 0 vs revealDelay: 0.8</h3>
+      <p>Both elements receive the same text at the same time. The difference in <code>revealDelay</code> dramatically changes how the effect feels.</p>
+      <div class="stage" style="flex-direction:column;gap:16px;">
+        <div class="reveal-grid">
+          <div class="reveal-cell">
+            <div class="rlabel">revealDelay: 0</div>
+            <div class="reveal-text" id="reveal-fast">Resolve quickly</div>
+          </div>
+          <div class="reveal-cell">
+            <div class="rlabel">revealDelay: 0.8</div>
+            <div class="reveal-text" id="reveal-slow">Scramble longer</div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-reveal-go">compare!</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#reveal-fast"</span>, { <span class="n">duration</span>: 1.5,
+  <span class="n">scrambleText</span>: { <span class="n">text</span>: <span class="s">"Resolved fast"</span>, <span class="n">chars</span>: <span class="s">"upperCase"</span>, <span class="n">revealDelay</span>: <span class="n">0</span> }
+});
+gsap.to(<span class="s">"#reveal-slow"</span>, { <span class="n">duration</span>: 1.5,
+  <span class="n">scrambleText</span>: { <span class="n">text</span>: <span class="s">"Scrambled long"</span>, <span class="n">chars</span>: <span class="s">"upperCase"</span>, <span class="n">revealDelay</span>: <span class="n">0.8</span> }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 4: Speed control -->
+  <section id="speed">
+    <div class="section-label">04 — ScrambleText</div>
+    <h2>Speed Control</h2>
+    <p class="section-desc"><code>speed</code> (0–1) controls how rapidly the scramble characters change each frame. Low speed = sluggish, high speed = rapid flickering.</p>
+
+    <div class="demo-card">
+      <h3>// drag slider to set speed, then scramble</h3>
+      <p>Adjust the speed before each scramble to hear the difference in energy. Very low values create a sluggish, eerie feel.</p>
+      <div class="stage">
+        <div class="scramble-heading" id="speed-text">Adjust speed and fire</div>
+      </div>
+      <div class="speed-control">
+        <label>speed:</label>
+        <input type="range" id="speed-slider" min="1" max="10" value="5" step="1" />
+        <span class="speed-val" id="speed-val-label">0.5</span>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-speed-go">scramble</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#speed-text"</span>, {
+  <span class="n">duration</span>: 1.5,
+  <span class="n">scrambleText</span>: {
+    <span class="n">text</span>: <span class="s">"Speed matters"</span>,
+    <span class="n">chars</span>: <span class="s">"upperCase"</span>,
+    <span class="n">speed</span>: <span class="n">0.5</span>  <span class="c">// ← drag slider to change</span>
+  }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 5: newClass highlight -->
+  <section id="newclass">
+    <div class="section-label">05 — ScrambleText</div>
+    <h2>newClass Highlight</h2>
+    <p class="section-desc"><code>newClass</code> adds a CSS class to each character the moment it resolves from scrambling to its real value — perfect for color highlights on reveal.</p>
+
+    <div class="demo-card">
+      <h3>// newClass: "new-char" — highlights chars on reveal</h3>
+      <p>As each character resolves, it gets <code>class="new-char"</code> briefly, turning teal. Watch characters light up as they snap into place.</p>
+      <div class="stage" style="min-height:120px;">
+        <div class="newclass-text" id="newclass-text">Reveal me character by character</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-newclass-go">reveal!</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#newclass-text"</span>, {
+  <span class="n">duration</span>: 2,
+  <span class="n">scrambleText</span>: {
+    <span class="n">text</span>: <span class="s">"Characters light up as they resolve"</span>,
+    <span class="n">chars</span>: <span class="s">"upperCase"</span>,
+    <span class="n">newClass</span>: <span class="s">"new-char"</span>,
+    <span class="n">speed</span>: 0.4
+  }
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 6: Loop cycle -->
+  <section id="loop">
+    <div class="section-label">06 — ScrambleText</div>
+    <h2>Infinite Scramble Cycle</h2>
+    <p class="section-desc">A GSAP timeline with <code>repeat: -1</code> continuously cycles through messages, each scrambling into the next with a pause between.</p>
+
+    <div class="demo-card">
+      <h3>// timeline repeat: -1, cycling 4 messages</h3>
+      <p>The timeline chains ScrambleText tweens with pauses, looping forever. Stop/start the cycle with the buttons.</p>
+      <div class="stage">
+        <div class="loop-display" id="loop-text">SYSTEM READY</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-loop-start">start cycle</button>
+        <button class="btn" id="btn-loop-stop">stop</button>
+      </div>
+      <div class="code-snippet"><span class="k">const</span> messages = [<span class="s">"SYSTEM READY"</span>, <span class="s">"LOADING DATA"</span>, <span class="s">"ACCESS GRANTED"</span>, <span class="s">"INITIALIZING"</span>];
+<span class="k">const</span> tl = gsap.timeline({ <span class="n">repeat</span>: -1 });
+messages.forEach(msg => {
+  tl.to(<span class="s">"#loop-text"</span>, {
+    <span class="n">duration</span>: 1.2,
+    <span class="n">scrambleText</span>: { <span class="n">text</span>: msg, <span class="n">chars</span>: <span class="s">"upperCase"</span>, <span class="n">speed</span>: 0.5 }
+  }).to({}, { <span class="n">duration</span>: 1.2 }); <span class="c">// pause</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 7: Glitch effect -->
+  <section id="glitch">
+    <div class="section-label">07 — ScrambleText</div>
+    <h2>Glitch Title Effect</h2>
+    <p class="section-desc">A large heading that glitches in place — scrambling to itself repeatedly for a boot-screen or corrupted-signal aesthetic.</p>
+
+    <div class="demo-card">
+      <h3>// scrambles to itself with symbols chars for glitch</h3>
+      <p>The text scrambles back to its own content using symbol chars and a short duration, then repeats a few times — like a signal disturbance.</p>
+      <div class="stage" style="min-height:220px; flex-direction:column; gap:12px;">
+        <div class="glitch-title" id="glitch-title">CORRUPTED</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">[ signal integrity: <span id="glitch-status">stable</span> ]</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btn-glitch-trigger">trigger glitch</button>
+        <button class="btn" id="btn-glitch-loop">continuous</button>
+        <button class="btn" id="btn-glitch-stop">stop</button>
+      </div>
+      <div class="code-snippet">gsap.to(<span class="s">"#glitch-title"</span>, {
+  <span class="n">duration</span>: 0.4,
+  <span class="n">scrambleText</span>: {
+    <span class="n">text</span>: <span class="s">"CORRUPTED"</span>,
+    <span class="n">chars</span>: <span class="s">"!@#$%^&*"</span>,
+    <span class="n">speed</span>: 0.9,
+    <span class="n">revealDelay</span>: 0.6
+  },
+  <span class="n">repeat</span>: 4,
+  <span class="n">repeatDelay</span>: 0.1
+});</div>
+    </div>
+  </section>
+</main>
+
+<footer>GSAP 3.15 · ScrambleText Demo · Built with vanilla HTML &amp; JS</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrambleTextPlugin.min.js"></script>
+<script>
+  gsap.registerPlugin(ScrambleTextPlugin);
+
+  /* ── Hero entrance ── */
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  /* ── Section 1: Basic ── */
+  const basicMessages = [
+    'Hello World',
+    'GSAP is amazing',
+    'Scramble everything',
+    'Text can dance',
+    'Click to continue'
+  ];
+  let basicIdx = 0;
+
+  document.getElementById('btn-basic-scramble').addEventListener('click', () => {
+    basicIdx = (basicIdx + 1) % basicMessages.length;
+    gsap.to('#basic-text', {
+      duration: 1.2,
+      scrambleText: {
+        text: basicMessages[basicIdx],
+        chars: 'upperCase',
+        revealDelay: 0.4,
+        speed: 0.5
+      }
+    });
+  });
+
+  /* ── Section 2: Char sets ── */
+  const charTargets = [
+    { id: '#chars-upper',   text: 'HELLO WORLD',   chars: 'upperCase' },
+    { id: '#chars-binary',  text: 'ACCESS GRANTED', chars: '01' },
+    { id: '#chars-symbols', text: 'SYSTEM GLITCH',  chars: '!@#$%^&*' },
+    { id: '#chars-japanese',text: 'こんにちは',      chars: 'あいうえおかきくけこ' },
+  ];
+  const charOriginals = ['HELLO WORLD', '10110101', '!@#$% GLITCH', 'あいうえお'];
+
+  document.getElementById('btn-chars-all').addEventListener('click', () => {
+    charTargets.forEach(({ id, text, chars }) => {
+      gsap.to(id, {
+        duration: 1.5,
+        scrambleText: { text, chars, speed: 0.45, revealDelay: 0.3 }
+      });
+    });
+  });
+  document.getElementById('btn-chars-reset').addEventListener('click', () => {
+    charOriginals.forEach((orig, i) => {
+      const ids = ['#chars-upper','#chars-binary','#chars-symbols','#chars-japanese'];
+      gsap.to(ids[i], {
+        duration: 0.8,
+        scrambleText: { text: orig, chars: 'upperCase', speed: 0.6 }
+      });
+    });
+  });
+
+  /* ── Section 3: Reveal delay ── */
+  let revealIdx = 0;
+  const revealPairs = [
+    { fast: 'Instant resolve', slow: 'Long scramble' },
+    { fast: 'Quick and clean', slow: 'Chaotic landing' },
+    { fast: 'Direct to truth', slow: 'Dramatic reveal' },
+  ];
+
+  document.getElementById('btn-reveal-go').addEventListener('click', () => {
+    const pair = revealPairs[revealIdx % revealPairs.length];
+    revealIdx++;
+    gsap.to('#reveal-fast', {
+      duration: 1.5,
+      scrambleText: { text: pair.fast, chars: 'upperCase', revealDelay: 0, speed: 0.5 }
+    });
+    gsap.to('#reveal-slow', {
+      duration: 1.5,
+      scrambleText: { text: pair.slow, chars: 'upperCase', revealDelay: 0.8, speed: 0.5 }
+    });
+  });
+
+  /* ── Section 4: Speed ── */
+  const speedSlider = document.getElementById('speed-slider');
+  const speedLabel = document.getElementById('speed-val-label');
+  const speedTexts = [
+    'Adjust speed and fire',
+    'Speed matters a lot',
+    'Try a low speed now',
+    'High speed is frantic',
+    'Find your sweet spot'
+  ];
+  let speedIdx = 0;
+
+  speedSlider.addEventListener('input', () => {
+    speedLabel.textContent = (speedSlider.value / 10).toFixed(1);
+  });
+
+  document.getElementById('btn-speed-go').addEventListener('click', () => {
+    const speed = parseFloat((speedSlider.value / 10).toFixed(1));
+    speedIdx = (speedIdx + 1) % speedTexts.length;
+    gsap.to('#speed-text', {
+      duration: 1.5,
+      scrambleText: {
+        text: speedTexts[speedIdx],
+        chars: 'upperCase',
+        speed: speed,
+        revealDelay: 0.3
+      }
+    });
+  });
+
+  /* ── Section 5: newClass ── */
+  const newclassTexts = [
+    'Characters light up as they resolve',
+    'Each letter reveals with a teal flash',
+    'Watch the wave of resolution appear',
+    'Reveal me character by character'
+  ];
+  let newclassIdx = 0;
+
+  document.getElementById('btn-newclass-go').addEventListener('click', () => {
+    newclassIdx = (newclassIdx + 1) % newclassTexts.length;
+    gsap.to('#newclass-text', {
+      duration: 2,
+      scrambleText: {
+        text: newclassTexts[newclassIdx],
+        chars: 'upperCase',
+        newClass: 'new-char',
+        speed: 0.4,
+        revealDelay: 0.3
+      }
+    });
+  });
+
+  /* ── Section 6: Loop cycle ── */
+  const loopMessages = ['SYSTEM READY', 'LOADING DATA...', 'ACCESS GRANTED', 'INITIALIZING...'];
+  let loopTl = null;
+
+  document.getElementById('btn-loop-start').addEventListener('click', () => {
+    if (loopTl) loopTl.kill();
+    loopTl = gsap.timeline({ repeat: -1 });
+    loopMessages.forEach(msg => {
+      loopTl
+        .to('#loop-text', {
+          duration: 1.2,
+          scrambleText: { text: msg, chars: 'upperCase', speed: 0.5, revealDelay: 0.3 }
+        })
+        .to({}, { duration: 1.2 });
+    });
+  });
+
+  document.getElementById('btn-loop-stop').addEventListener('click', () => {
+    if (loopTl) { loopTl.kill(); loopTl = null; }
+  });
+
+  /* ── Section 7: Glitch ── */
+  let glitchLoopTl = null;
+  const glitchStatus = document.getElementById('glitch-status');
+
+  document.getElementById('btn-glitch-trigger').addEventListener('click', () => {
+    if (glitchLoopTl) { glitchLoopTl.kill(); glitchLoopTl = null; }
+    glitchStatus.textContent = 'unstable';
+    gsap.to('#glitch-title', {
+      duration: 0.35,
+      scrambleText: {
+        text: 'CORRUPTED',
+        chars: '!@#$%^&*',
+        speed: 0.9,
+        revealDelay: 0.6
+      },
+      repeat: 4,
+      repeatDelay: 0.08,
+      onComplete: () => { glitchStatus.textContent = 'stable'; }
+    });
+  });
+
+  document.getElementById('btn-glitch-loop').addEventListener('click', () => {
+    if (glitchLoopTl) glitchLoopTl.kill();
+    glitchStatus.textContent = 'critical';
+    const glitchWords = ['CORRUPTED', 'C0RRuPT3D', 'ERROR///', 'CORRUPTED'];
+    glitchLoopTl = gsap.timeline({ repeat: -1 });
+    glitchWords.forEach(word => {
+      glitchLoopTl
+        .to('#glitch-title', {
+          duration: 0.3,
+          scrambleText: { text: word, chars: '!@#$%^&*', speed: 0.95, revealDelay: 0.5 }
+        })
+        .to({}, { duration: 0.15 });
+    });
+  });
+
+  document.getElementById('btn-glitch-stop').addEventListener('click', () => {
+    if (glitchLoopTl) { glitchLoopTl.kill(); glitchLoopTl = null; }
+    glitchStatus.textContent = 'stable';
+    gsap.to('#glitch-title', {
+      duration: 0.8,
+      scrambleText: { text: 'CORRUPTED', chars: 'upperCase', speed: 0.3 }
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CustomWiggle — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* Page-specific styles */
+    .wiggle-box {
+      width: 64px; height: 64px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.7);
+    }
+    .wiggle-col {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .wiggle-col .label {
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      text-align: center; max-width: 72px;
+    }
+    .types-row {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%;
+    }
+    .count-row {
+      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; width: 100%;
+    }
+    .amplitude-row {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%;
+    }
+    .needle-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    }
+    #needle {
+      width: 12px; height: 80px;
+      background: linear-gradient(to bottom, var(--accent4), var(--accent));
+      border-radius: 6px;
+      transform-origin: 50% 85%;
+    }
+    .bell-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    }
+    #bellIcon {
+      font-size: 3rem; line-height: 1;
+      display: block;
+      transform-origin: 50% 10%;
+    }
+    .shake-input-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    }
+    #shakeInput {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 14px; border-radius: 8px;
+      outline: none; width: 200px; text-align: center;
+    }
+    #shakeInput.error { border-color: var(--accent3); color: var(--accent3); }
+    .shake-row { display: flex; gap: 3rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .slider-wrap { display: flex; align-items: center; gap: 10px; }
+    .slider-wrap label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .slider-wrap input[type=range] {
+      -webkit-appearance: none; width: 120px; height: 4px;
+      background: var(--surface2); border-radius: 2px; outline: none;
+      border: 1px solid var(--border);
+    }
+    .slider-wrap input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 14px; height: 14px;
+      border-radius: 50%; background: var(--accent4); cursor: pointer;
+    }
+    .slider-val { font-family: var(--mono); font-size: 11px; color: var(--accent4); min-width: 18px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html" selected>CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#basic">Basic</a>
+  <a href="#types">Types</a>
+  <a href="#wiggles">Count</a>
+  <a href="#amplitude">Amplitude</a>
+  <a href="#shake">Shake</a>
+  <a href="#rotation">Rotation</a>
+</nav>
+
+<main>
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · CustomWiggle · Demo</div>
+    <h1 id="hero-title">Custom<br/><span>Wiggle</span></h1>
+    <p id="hero-desc">Create oscillating wiggle eases with full control over count, type, and amplitude. Perfect for attention effects, shakes, and wobbly animations.</p>
+  </div>
+
+  <!-- Section 1: Basic wiggle -->
+  <section id="basic">
+    <div class="section-label">01 — Basic</div>
+    <h2>Basic Wiggle</h2>
+    <p class="section-desc">Create a named wiggle ease with <code>CustomWiggle.create()</code>, then use its name as the <code>ease</code> in any tween. The box wiggles 6 times on the x-axis.</p>
+    <div class="demo-card">
+      <h3>uniform wiggle · 6 oscillations</h3>
+      <p>A box wiggles left-right 6 times using the "myWiggle" ease. The ease decays symmetrically from the target value.</p>
+      <div class="stage">
+        <div class="wiggle-box" id="basicBox" style="background: rgba(120,80,255,0.4); border: 1px solid #7850ff;">WIGGLE</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="doBasicWiggle()">wiggle!</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"myWiggle"</span>, {
+  wiggles: <span class="n">6</span>, type: <span class="s">"uniform"</span>
+});
+
+<span class="k">gsap</span>.<span class="n">to</span>(<span class="s">".box"</span>, {
+  x: <span class="n">30</span>,
+  ease: <span class="s">"myWiggle"</span>,
+  duration: <span class="n">1</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 2: Type comparison -->
+  <section id="types">
+    <div class="section-label">02 — Types</div>
+    <h2>Type Comparison</h2>
+    <p class="section-desc">CustomWiggle supports 6 types. Each changes how amplitude evolves over the animation — from building-in to random to ease-in-out patterns.</p>
+    <div class="demo-card">
+      <h3>all 6 types side by side</h3>
+      <p>Watch how each type produces a distinct character — anticipate starts backward, random is unpredictable, easeInOut is smooth on both ends.</p>
+      <div class="stage">
+        <div class="types-row" id="typesRow">
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="typeBox0" style="background:rgba(120,80,255,0.4);border:1px solid #7850ff;"></div>
+            <span class="label">anticipate</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="typeBox1" style="background:rgba(0,229,192,0.4);border:1px solid #00e5c0;"></div>
+            <span class="label">uniform</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="typeBox2" style="background:rgba(255,92,138,0.4);border:1px solid #ff5c8a;"></div>
+            <span class="label">random</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="typeBox3" style="background:rgba(255,184,48,0.4);border:1px solid #ffb830;"></div>
+            <span class="label">ease</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="typeBox4" style="background:rgba(68,136,255,0.4);border:1px solid #4488ff;"></div>
+            <span class="label">easeOut</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="typeBox5" style="background:rgba(200,80,255,0.4);border:1px solid #c850ff;"></div>
+            <span class="label">easeInOut</span>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="runAllTypes()">run all</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"wAnt"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"anticipate"</span> });
+<span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"wUni"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"uniform"</span> });
+<span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"wRnd"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"random"</span> });
+<span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"wEase"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"ease"</span> });
+<span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"wEaseOut"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"easeOut"</span> });
+<span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"wEaseInOut"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"easeInOut"</span> });</div>
+    </div>
+  </section>
+
+  <!-- Section 3: Wiggle count -->
+  <section id="wiggles">
+    <div class="section-label">03 — Count</div>
+    <h2>Wiggle Count</h2>
+    <p class="section-desc">The <code>wiggles</code> option controls how many oscillations occur. More wiggles in the same duration means faster vibration.</p>
+    <div class="demo-card">
+      <h3>3, 6, 10, 20 wiggles</h3>
+      <p>Same type, same duration — only <code>wiggles</code> differs. Use the slider to set a custom count and re-run.</p>
+      <div class="stage">
+        <div class="count-row">
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="countBox3" style="background:rgba(120,80,255,0.4);border:1px solid #7850ff;"></div>
+            <span class="label">wiggles: 3</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="countBox6" style="background:rgba(0,229,192,0.4);border:1px solid #00e5c0;"></div>
+            <span class="label">wiggles: 6</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="countBox10" style="background:rgba(255,92,138,0.4);border:1px solid #ff5c8a;"></div>
+            <span class="label">wiggles: 10</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="countBox20" style="background:rgba(255,184,48,0.4);border:1px solid #ffb830;"></div>
+            <span class="label">wiggles: 20</span>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="runCountDemo()">run all</button>
+        <div class="slider-wrap">
+          <label>custom:</label>
+          <input type="range" id="wiggleCountSlider" min="1" max="30" value="6" oninput="updateSliderVal(this.value)">
+          <span class="slider-val" id="sliderVal">6</span>
+          <button class="btn" onclick="runCustomCount()">run custom</button>
+        </div>
+      </div>
+      <div id="customCountBox" style="display:none; margin-top: 1rem;">
+        <div class="stage" style="min-height: 80px;">
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="customCountTarget" style="background:rgba(200,80,255,0.4);border:1px solid #c850ff;"></div>
+            <span class="label" id="customCountLabel">wiggles: 6</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: Amplitude -->
+  <section id="amplitude">
+    <div class="section-label">04 — Amplitude</div>
+    <h2>Amplitude Control</h2>
+    <p class="section-desc">Wiggle amplitude is set by the tween property value itself — a larger <code>x</code> value means a bigger wiggle, while the ease shape stays the same.</p>
+    <div class="demo-card">
+      <h3>x:10 · x:30 · x:60 · x:100</h3>
+      <p>All four boxes use the same "anticipate" wiggle ease. The only difference is the target <code>x</code> value in each tween.</p>
+      <div class="stage">
+        <div class="amplitude-row">
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="ampBox10" style="background:rgba(120,80,255,0.4);border:1px solid #7850ff;"></div>
+            <span class="label">x: 10</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="ampBox30" style="background:rgba(0,229,192,0.4);border:1px solid #00e5c0;"></div>
+            <span class="label">x: 30</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="ampBox60" style="background:rgba(255,92,138,0.4);border:1px solid #ff5c8a;"></div>
+            <span class="label">x: 60</span>
+          </div>
+          <div class="wiggle-col">
+            <div class="wiggle-box" id="ampBox100" style="background:rgba(255,184,48,0.4);border:1px solid #ffb830;"></div>
+            <span class="label">x: 100</span>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="runAmplitudeDemo()">run all</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"ampWiggle"</span>, { wiggles: <span class="n">6</span>, type: <span class="s">"anticipate"</span> });
+
+<span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#box1"</span>, { x: <span class="n">10</span>, ease: <span class="s">"ampWiggle"</span>, duration: <span class="n">1</span> });
+<span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#box2"</span>, { x: <span class="n">30</span>, ease: <span class="s">"ampWiggle"</span>, duration: <span class="n">1</span> });
+<span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#box3"</span>, { x: <span class="n">60</span>, ease: <span class="s">"ampWiggle"</span>, duration: <span class="n">1</span> });
+<span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#box4"</span>, { x: <span class="n">100</span>, ease: <span class="s">"ampWiggle"</span>, duration: <span class="n">1</span> });</div>
+    </div>
+  </section>
+
+  <!-- Section 5: Shake -->
+  <section id="shake">
+    <div class="section-label">05 — Shake</div>
+    <h2>Shake Effect</h2>
+    <p class="section-desc">High <code>wiggles</code> count with a short duration creates a convincing shake. Great for error states, notifications, and alerts.</p>
+    <div class="demo-card">
+      <h3>bell shake & form error shake</h3>
+      <p>A notification bell shakes to grab attention. A form input shakes when "submitted" with invalid data — a classic UX pattern.</p>
+      <div class="stage">
+        <div class="shake-row">
+          <div class="bell-wrap">
+            <span id="bellIcon">🔔</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">notification</span>
+          </div>
+          <div class="shake-input-wrap">
+            <input type="text" id="shakeInput" placeholder="enter anything..." value="" />
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">form field</span>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="shakeBell()">shake bell</button>
+        <button class="btn" onclick="shakeInput()">trigger error</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"shake"</span>, {
+  wiggles: <span class="n">12</span>, type: <span class="s">"uniform"</span>
+});
+
+<span class="k">gsap</span>.<span class="n">to</span>(bell, {
+  rotation: <span class="n">15</span>,
+  ease: <span class="s">"shake"</span>,
+  duration: <span class="n">0.5</span>,
+  transformOrigin: <span class="s">"50% 10%"</span>
+});
+
+<span class="k">gsap</span>.<span class="n">to</span>(input, {
+  x: <span class="n">8</span>,
+  ease: <span class="s">"shake"</span>,
+  duration: <span class="n">0.5</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 6: Rotation wiggle -->
+  <section id="rotation">
+    <div class="section-label">06 — Rotation</div>
+    <h2>Rotation Wiggle</h2>
+    <p class="section-desc">Apply wiggle eases to <code>rotation</code> instead of <code>x/y</code> for a needle wobble or pendulum effect. Great for gauges, indicators, and loading states.</p>
+    <div class="demo-card">
+      <h3>pointer / needle wobble</h3>
+      <p>A needle rotates left-right using the wiggle ease on the <code>rotation</code> property. Transform origin is set to the needle's pivot point.</p>
+      <div class="stage">
+        <div class="needle-wrap">
+          <div id="needle"></div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">needle</span>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="wiggleNeedle()">wobble</button>
+        <button class="btn" onclick="wiggleNeedleFast()">fast wobble</button>
+        <button class="btn" onclick="resetNeedle()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">CustomWiggle</span>.<span class="n">create</span>(<span class="s">"needleWiggle"</span>, {
+  wiggles: <span class="n">8</span>, type: <span class="s">"easeOut"</span>
+});
+
+<span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#needle"</span>, {
+  rotation: <span class="n">15</span>,
+  ease: <span class="s">"needleWiggle"</span>,
+  duration: <span class="n">1.5</span>,
+  transformOrigin: <span class="s">"50% 85%"</span>
+});</div>
+    </div>
+  </section>
+</main>
+
+<footer>GSAP 3.15 · CustomWiggle · Standalone Demo · No build tools</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/EasePack.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/CustomEase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/CustomWiggle.min.js"></script>
+<script>
+  gsap.registerPlugin(CustomWiggle, CustomEase, EasePack);
+
+  // ── Create all named wiggles before any tweens ──────────────────────
+  CustomWiggle.create("myWiggle",     { wiggles: 6,  type: "uniform" });
+  CustomWiggle.create("wAnt",         { wiggles: 6,  type: "anticipate" });
+  CustomWiggle.create("wUni",         { wiggles: 6,  type: "uniform" });
+  CustomWiggle.create("wRnd",         { wiggles: 6,  type: "random" });
+  CustomWiggle.create("wEase",        { wiggles: 6,  type: "ease" });
+  CustomWiggle.create("wEaseOut",     { wiggles: 6,  type: "easeOut" });
+  CustomWiggle.create("wEaseInOut",   { wiggles: 6,  type: "easeInOut" });
+  CustomWiggle.create("wCount3",      { wiggles: 3,  type: "uniform" });
+  CustomWiggle.create("wCount6",      { wiggles: 6,  type: "uniform" });
+  CustomWiggle.create("wCount10",     { wiggles: 10, type: "uniform" });
+  CustomWiggle.create("wCount20",     { wiggles: 20, type: "uniform" });
+  CustomWiggle.create("ampWiggle",    { wiggles: 6,  type: "anticipate" });
+  CustomWiggle.create("shake",        { wiggles: 12, type: "uniform" });
+  CustomWiggle.create("needleWiggle", { wiggles: 8,  type: "easeOut" });
+  CustomWiggle.create("needleFast",   { wiggles: 14, type: "uniform" });
+
+  // Hero animation
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  // ── Section 1: Basic ────────────────────────────────────────────────
+  function doBasicWiggle() {
+    gsap.fromTo('#basicBox', { x: 0 }, { x: 30, ease: 'myWiggle', duration: 1 });
+  }
+
+  // ── Section 2: Types ────────────────────────────────────────────────
+  var typeEases = ['wAnt', 'wUni', 'wRnd', 'wEase', 'wEaseOut', 'wEaseInOut'];
+  function runAllTypes() {
+    typeEases.forEach(function(ease, i) {
+      gsap.fromTo('#typeBox' + i, { x: 0 }, { x: 28, ease: ease, duration: 1, delay: 0 });
+    });
+  }
+
+  // ── Section 3: Count ────────────────────────────────────────────────
+  function runCountDemo() {
+    gsap.fromTo('#countBox3',  { x: 0 }, { x: 30, ease: 'wCount3',  duration: 1 });
+    gsap.fromTo('#countBox6',  { x: 0 }, { x: 30, ease: 'wCount6',  duration: 1 });
+    gsap.fromTo('#countBox10', { x: 0 }, { x: 30, ease: 'wCount10', duration: 1 });
+    gsap.fromTo('#countBox20', { x: 0 }, { x: 30, ease: 'wCount20', duration: 1 });
+  }
+
+  function updateSliderVal(val) {
+    document.getElementById('sliderVal').textContent = val;
+  }
+
+  function runCustomCount() {
+    var n = parseInt(document.getElementById('wiggleCountSlider').value);
+    document.getElementById('customCountLabel').textContent = 'wiggles: ' + n;
+    document.getElementById('customCountBox').style.display = 'block';
+    // Create/overwrite wiggle with new count
+    CustomWiggle.create("wCustom", { wiggles: n, type: "uniform" });
+    gsap.fromTo('#customCountTarget', { x: 0 }, { x: 30, ease: 'wCustom', duration: 1 });
+  }
+
+  // ── Section 4: Amplitude ────────────────────────────────────────────
+  function runAmplitudeDemo() {
+    gsap.fromTo('#ampBox10',  { x: 0 }, { x: 10,  ease: 'ampWiggle', duration: 1 });
+    gsap.fromTo('#ampBox30',  { x: 0 }, { x: 30,  ease: 'ampWiggle', duration: 1 });
+    gsap.fromTo('#ampBox60',  { x: 0 }, { x: 60,  ease: 'ampWiggle', duration: 1 });
+    gsap.fromTo('#ampBox100', { x: 0 }, { x: 100, ease: 'ampWiggle', duration: 1 });
+  }
+
+  // ── Section 5: Shake ────────────────────────────────────────────────
+  function shakeBell() {
+    gsap.fromTo('#bellIcon',
+      { rotation: 0 },
+      { rotation: 15, ease: 'shake', duration: 0.5, transformOrigin: '50% 10%' }
+    );
+  }
+
+  function shakeInput() {
+    var inp = document.getElementById('shakeInput');
+    inp.classList.add('error');
+    gsap.fromTo(inp,
+      { x: 0 },
+      { x: 8, ease: 'shake', duration: 0.5, onComplete: function() {
+        setTimeout(function() { inp.classList.remove('error'); }, 800);
+      }}
+    );
+  }
+
+  // ── Section 6: Rotation ─────────────────────────────────────────────
+  function wiggleNeedle() {
+    gsap.fromTo('#needle',
+      { rotation: 0 },
+      { rotation: 15, ease: 'needleWiggle', duration: 1.5, transformOrigin: '50% 85%' }
+    );
+  }
+
+  function wiggleNeedleFast() {
+    gsap.fromTo('#needle',
+      { rotation: 0 },
+      { rotation: 20, ease: 'needleFast', duration: 0.8, transformOrigin: '50% 85%' }
+    );
+  }
+
+  function resetNeedle() {
+    gsap.to('#needle', { rotation: 0, duration: 0.4, ease: 'power2.out', transformOrigin: '50% 85%' });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SplitText — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1.5rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,92,138,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* Demo-specific */
+    .split-heading {
+      font-family: var(--mono);
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      text-align: center;
+      color: var(--text);
+    }
+    .split-para {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text);
+      max-width: 560px;
+      text-align: center;
+    }
+    .split-lines-text {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.6;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    /* charsClass colored chars */
+    .char-a { color: var(--accent4); }
+    .char-b { color: var(--accent2); }
+    .char-c { color: var(--accent3); }
+    .char-d { color: var(--accent); }
+
+    /* propIndex example */
+    .char-pi {
+      display: inline-block;
+      transition: color 0.1s;
+    }
+
+    /* autoSplit note */
+    .autosplit-note {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(120,80,255,0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 1rem;
+    }
+
+    /* stagger grid */
+    .stagger-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 540px;
+      text-align: center;
+    }
+    .stagger-word {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html" selected>SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#chars">Chars</a>
+  <a href="#words">Words</a>
+  <a href="#lines">Lines</a>
+  <a href="#autosplit">autoSplit</a>
+  <a href="#stagger">Stagger</a>
+  <a href="#classes">Classes</a>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · SplitText · Demo</div>
+    <h1 id="hero-title">Split<br/><span>Text</span></h1>
+    <p id="hero-desc">Split any element into characters, words, or lines and animate each unit independently with full GSAP control.</p>
+  </div>
+
+  <!-- CHARS -->
+  <section id="chars">
+    <div class="section-label">01 — Characters</div>
+    <h2>Animate Characters</h2>
+    <p class="section-desc">Split a heading into individual <code>chars</code>. Each character becomes a wrapper element you can tween independently with staggered timing.</p>
+
+    <div class="demo-card">
+      <h3>// type: "chars" · stagger + rotationX</h3>
+      <p>Characters tumble in from above using a 3D rotation on the X axis. "Revert" restores the original DOM markup.</p>
+
+      <div class="stage">
+        <div id="chars-target" class="split-heading">Animate Everything</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="chars-play-btn">play</button>
+        <button class="btn" id="chars-reverse-btn">reverse</button>
+        <button class="btn" id="chars-revert-btn">revert</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> split = <span class="k">SplitText</span>.create(<span class="s">"#chars-target"</span>, { type: <span class="s">"words,chars"</span> });
+
+<span class="k">gsap</span>.from(split.chars, {
+  opacity: <span class="n">0</span>,
+  y: <span class="n">40</span>,
+  rotationX: <span class="n">-90</span>,
+  stagger: <span class="n">0.03</span>,
+  duration: <span class="n">0.5</span>,
+  ease: <span class="s">"back.out(1.7)"</span>
+});
+
+<span class="k">// Restore original markup:
+</span>split.revert();</div>
+    </div>
+  </section>
+
+  <!-- WORDS -->
+  <section id="words">
+    <div class="section-label">02 — Words</div>
+    <h2>Animate Words</h2>
+    <p class="section-desc">Split a paragraph into <code>words</code>. Words wrap naturally across lines and animate in sequence. Useful for body copy reveals.</p>
+
+    <div class="demo-card">
+      <h3>// type: "words" · natural wrapping preserved</h3>
+      <p>Each word fades and lifts in independently. The layout wraps as normal — no line-break artifacts.</p>
+
+      <div class="stage" style="padding: 2rem;">
+        <p id="words-target" class="split-para">Typography is the art and technique of arranging type to make written language legible, readable, and appealing when displayed.</p>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="words-play-btn">play</button>
+        <button class="btn" id="words-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> split = <span class="k">SplitText</span>.create(<span class="s">"#words-target"</span>, { type: <span class="s">"words"</span> });
+
+<span class="k">gsap</span>.from(split.words, {
+  opacity: <span class="n">0</span>,
+  y: <span class="n">20</span>,
+  stagger: <span class="n">0.05</span>,
+  duration: <span class="n">0.45</span>,
+  ease: <span class="s">"power2.out"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- LINES -->
+  <section id="lines">
+    <div class="section-label">03 — Lines</div>
+    <h2>Line Reveal with Mask</h2>
+    <p class="section-desc">Split into <code>lines</code> and apply <code>mask: "lines"</code> to generate clip wrappers. Lines slide up from below the mask — a classic editorial text reveal.</p>
+
+    <div class="demo-card">
+      <h3>// mask: "lines" · yPercent: 100 → 0</h3>
+      <p>Each line slides up from below its clip boundary. Text appears to emerge from behind a surface.</p>
+
+      <div class="stage" style="padding: 2rem; align-items: flex-start; justify-content: flex-start;">
+        <div id="lines-target" class="split-lines-text" style="text-align: left; max-width: 100%;">
+          Motion design is the craft<br/>
+          of giving ideas velocity and weight.<br/>
+          Great animation feels inevitable.
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="lines-play-btn">play</button>
+        <button class="btn" id="lines-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> split = <span class="k">SplitText</span>.create(<span class="s">"#lines-target"</span>, {
+  type: <span class="s">"lines"</span>,
+  mask: <span class="s">"lines"</span>
+});
+
+<span class="k">gsap</span>.from(split.lines, {
+  yPercent: <span class="n">100</span>,
+  opacity: <span class="n">0</span>,
+  stagger: <span class="n">0.1</span>,
+  duration: <span class="n">0.6</span>,
+  ease: <span class="s">"power3.out"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- AUTOSPLIT -->
+  <section id="autosplit">
+    <div class="section-label">04 — autoSplit</div>
+    <h2>autoSplit + onSplit</h2>
+    <p class="section-desc"><code>autoSplit: true</code> automatically re-splits when the element width changes (e.g. window resize). Returning the animation from <code>onSplit</code> lets SplitText sync progress and clean up on each re-split.</p>
+
+    <div class="demo-card">
+      <h3>// autoSplit + onSplit — resize-safe animation</h3>
+      <p>This heading re-splits on every resize. The animation restarts automatically with correct line counts each time. Try resizing the window.</p>
+
+      <div class="stage" style="padding: 2rem;">
+        <div id="autosplit-target" class="split-lines-text" style="text-align: center;">
+          Responsive type animation that adapts to every screen width automatically.
+        </div>
+      </div>
+
+      <div class="autosplit-note">
+        autoSplit: true — this split re-fires and re-animates on window resize.<br/>
+        The onSplit callback returns the tween so SplitText can clean up old animations.
+      </div>
+
+      <div class="code-snippet"><span class="k">SplitText</span>.create(<span class="s">"#autosplit-target"</span>, {
+  type: <span class="s">"lines"</span>,
+  mask: <span class="s">"lines"</span>,
+  autoSplit: <span class="n">true</span>,
+  onSplit(self) {
+    <span class="k">return</span> <span class="k">gsap</span>.from(self.lines, {
+      yPercent: <span class="n">110</span>,
+      opacity: <span class="n">0</span>,
+      stagger: <span class="n">0.12</span>,
+      duration: <span class="n">0.7</span>,
+      ease: <span class="s">"power3.out"</span>
+    });
+  }
+});</div>
+    </div>
+  </section>
+
+  <!-- STAGGER PATTERNS -->
+  <section id="stagger">
+    <div class="section-label">05 — Stagger Patterns</div>
+    <h2>Stagger Configs</h2>
+    <p class="section-desc">GSAP stagger objects unlock powerful sequencing: sequential, from center, from random. Each produces a completely different feel from the same elements.</p>
+
+    <div class="demo-card">
+      <h3>// Three stagger styles on the same word grid</h3>
+      <p>Click each button to trigger that stagger pattern. The words reset then animate with the selected config.</p>
+
+      <div class="stage" style="min-height: 200px; align-items: center; flex-direction: column; gap: 1rem;">
+        <div id="stagger-target" class="stagger-grid">
+          <span class="stagger-word">motion</span>
+          <span class="stagger-word">design</span>
+          <span class="stagger-word">craft</span>
+          <span class="stagger-word">time</span>
+          <span class="stagger-word">easing</span>
+          <span class="stagger-word">rhythm</span>
+          <span class="stagger-word">weight</span>
+          <span class="stagger-word">flow</span>
+          <span class="stagger-word">space</span>
+          <span class="stagger-word">arc</span>
+          <span class="stagger-word">snap</span>
+          <span class="stagger-word">pulse</span>
+        </div>
+        <div id="stagger-label" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">— select a pattern —</div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="stag-seq-btn">sequential</button>
+        <button class="btn" id="stag-center-btn">from center</button>
+        <button class="btn" id="stag-random-btn">from random</button>
+        <button class="btn" id="stag-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet" id="stagger-code"><span class="k">// Click a pattern above to see the code</span></div>
+    </div>
+  </section>
+
+  <!-- CLASSES -->
+  <section id="classes">
+    <div class="section-label">06 — Classes &amp; propIndex</div>
+    <h2>charsClass &amp; propIndex</h2>
+    <p class="section-desc"><code>charsClass: "char++"</code> adds incremented class names (<code>char1, char2…</code>) to each character element. <code>propIndex: true</code> injects CSS custom properties (<code>--char: 1</code>) for CSS-driven stagger effects.</p>
+
+    <div class="demo-card">
+      <h3>// charsClass: "char++" for CSS-targeted styling</h3>
+      <p>The split adds <code>char1…charN</code> classes. CSS selectors target every 4th char with different accent colors. No JS needed for the colors.</p>
+
+      <div class="stage" style="flex-direction: column; gap: 20px;">
+        <div id="class-target" class="split-heading" style="font-size: clamp(1.5rem, 4vw, 3rem);">
+          Color Chars
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="class-play-btn">animate</button>
+        <button class="btn" id="class-revert-btn">revert</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> split = <span class="k">SplitText</span>.create(<span class="s">"#class-target"</span>, {
+  type: <span class="s">"chars"</span>,
+  charsClass: <span class="s">"char++"</span>   <span class="k">// → char1, char2, char3 …</span>
+});
+
+<span class="k">/* CSS then targets every 4th starting at n:
+</span>.char1, .char5, .char9  { color: var(--accent4); }
+.char2, .char6, .char10 { color: var(--accent2); }
+.char3, .char7, .char11 { color: var(--accent3); }
+.char4, .char8, .char12 { color: var(--accent); }
+<span class="k">*/</span>
+
+<span class="k">gsap</span>.from(split.chars, {
+  opacity: <span class="n">0</span>, scale: <span class="n">0.3</span>, rotation: <span class="n">-30</span>,
+  stagger: <span class="n">0.05</span>, duration: <span class="n">0.5</span>, ease: <span class="s">"back.out(2)"</span>
+});</div>
+    </div>
+
+    <div class="demo-card">
+      <h3>// propIndex: true — CSS custom property per char</h3>
+      <p>With <code>propIndex: true</code>, each char element gets a <code>--char: N</code> CSS variable. Use <code>calc()</code> in CSS to derive staggered hue, opacity, or transform.</p>
+
+      <div class="stage" style="min-height: 120px;">
+        <div id="propindex-target" class="split-heading" style="font-size: clamp(1.2rem, 3vw, 2.5rem);">
+          Index Colors
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="pi-play-btn">animate</button>
+        <button class="btn" id="pi-revert-btn">revert</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> split = <span class="k">SplitText</span>.create(<span class="s">"#propindex-target"</span>, {
+  type: <span class="s">"chars"</span>,
+  propIndex: <span class="n">true</span>   <span class="k">// adds --char: N on each element</span>
+});
+
+<span class="k">/* CSS uses hsl() with calc() on the var:
+</span>.char-pi {
+  color: hsl(calc(var(--char, 0) * 22deg), 90%, 70%);
+}
+<span class="k">*/</span>
+
+<span class="k">gsap</span>.from(split.chars, {
+  opacity: <span class="n">0</span>, y: <span class="n">30</span>,
+  stagger: <span class="n">0.04</span>, duration: <span class="n">0.5</span>, ease: <span class="s">"power3.out"</span>
+});</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>GSAP 3.15 · SplitText Demo · Curtis Nguyen</footer>
+
+<!-- Inject dynamic CSS for charsClass and propIndex -->
+<style id="dynamic-char-css">
+  /* charsClass++ color cycling — targets groups of 4 */
+  /* Injected by JS after split to keep pattern generic */
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+<script>
+  gsap.registerPlugin(SplitText);
+
+  // ─── Hero ───────────────────────────────────────────────────────────────
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  // ─── Section 1: Chars ───────────────────────────────────────────────────
+  let charSplit = null;
+  let charTween = null;
+
+  function buildCharSplit() {
+    if (charSplit) charSplit.revert();
+    charSplit = SplitText.create('#chars-target', { type: 'words,chars' });
+    return charSplit;
+  }
+
+  document.getElementById('chars-play-btn').addEventListener('click', () => {
+    if (charTween) charTween.kill();
+    buildCharSplit();
+    charTween = gsap.from(charSplit.chars, {
+      opacity: 0,
+      y: 40,
+      rotationX: -90,
+      stagger: 0.03,
+      duration: 0.5,
+      ease: 'back.out(1.7)',
+      transformOrigin: '50% 50% -20px'
+    });
+  });
+
+  document.getElementById('chars-reverse-btn').addEventListener('click', () => {
+    if (charTween) charTween.reverse();
+  });
+
+  document.getElementById('chars-revert-btn').addEventListener('click', () => {
+    if (charTween) charTween.kill();
+    if (charSplit) { charSplit.revert(); charSplit = null; }
+  });
+
+  // ─── Section 2: Words ───────────────────────────────────────────────────
+  let wordSplit = null;
+  let wordTween = null;
+  const wordsOriginalHTML = document.getElementById('words-target').innerHTML;
+
+  document.getElementById('words-play-btn').addEventListener('click', () => {
+    if (wordTween) wordTween.kill();
+    if (wordSplit) wordSplit.revert();
+    wordSplit = SplitText.create('#words-target', { type: 'words' });
+    wordTween = gsap.from(wordSplit.words, {
+      opacity: 0,
+      y: 20,
+      stagger: 0.05,
+      duration: 0.45,
+      ease: 'power2.out'
+    });
+  });
+
+  document.getElementById('words-reset-btn').addEventListener('click', () => {
+    if (wordTween) wordTween.kill();
+    if (wordSplit) { wordSplit.revert(); wordSplit = null; }
+    gsap.set('#words-target', { clearProps: 'all' });
+  });
+
+  // ─── Section 3: Lines / Mask ────────────────────────────────────────────
+  let linesSplit = null;
+  let linesTween = null;
+
+  document.getElementById('lines-play-btn').addEventListener('click', () => {
+    if (linesTween) linesTween.kill();
+    if (linesSplit) linesSplit.revert();
+    linesSplit = SplitText.create('#lines-target', { type: 'lines', mask: 'lines' });
+    gsap.set(linesSplit.lines, { yPercent: 100, opacity: 0 });
+    linesTween = gsap.to(linesSplit.lines, {
+      yPercent: 0,
+      opacity: 1,
+      stagger: 0.1,
+      duration: 0.6,
+      ease: 'power3.out'
+    });
+  });
+
+  document.getElementById('lines-reset-btn').addEventListener('click', () => {
+    if (linesTween) linesTween.kill();
+    if (linesSplit) { linesSplit.revert(); linesSplit = null; }
+    gsap.set('#lines-target', { clearProps: 'all' });
+  });
+
+  // ─── Section 4: autoSplit ───────────────────────────────────────────────
+  // autoSplit: true means the plugin manages splits on resize automatically
+  SplitText.create('#autosplit-target', {
+    type: 'lines',
+    mask: 'lines',
+    autoSplit: true,
+    onSplit(self) {
+      return gsap.from(self.lines, {
+        yPercent: 110,
+        opacity: 0,
+        stagger: 0.12,
+        duration: 0.7,
+        ease: 'power3.out'
+      });
+    }
+  });
+
+  // ─── Section 5: Stagger patterns ────────────────────────────────────────
+  const staggerWords = document.querySelectorAll('#stagger-target .stagger-word');
+  const staggerLabel = document.getElementById('stagger-label');
+  const staggerCode  = document.getElementById('stagger-code');
+  let staggerTween   = null;
+
+  function resetStagger() {
+    if (staggerTween) staggerTween.kill();
+    gsap.set(staggerWords, { opacity: 1, y: 0, scale: 1 });
+  }
+
+  function runStagger(config, labelText, codeHTML) {
+    resetStagger();
+    gsap.set(staggerWords, { opacity: 0, y: 20, scale: 0.85 });
+    staggerLabel.textContent = labelText;
+    staggerCode.innerHTML = codeHTML;
+    staggerTween = gsap.to(staggerWords, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      stagger: config,
+      duration: 0.4,
+      ease: 'power2.out'
+    });
+  }
+
+  document.getElementById('stag-seq-btn').addEventListener('click', () => {
+    runStagger(0.05,
+      '— sequential (left to right) —',
+      `<span class="k">gsap</span>.to(words, { opacity: <span class="n">1</span>, stagger: <span class="n">0.05</span>, duration: <span class="n">0.4</span> });`
+    );
+  });
+
+  document.getElementById('stag-center-btn').addEventListener('click', () => {
+    runStagger({ each: 0.06, from: 'center' },
+      '— from center outward —',
+      `<span class="k">gsap</span>.to(words, {\n  opacity: <span class="n">1</span>,\n  stagger: { each: <span class="n">0.06</span>, from: <span class="s">"center"</span> },\n  duration: <span class="n">0.4</span>\n});`
+    );
+  });
+
+  document.getElementById('stag-random-btn').addEventListener('click', () => {
+    runStagger({ each: 0.06, from: 'random' },
+      '— from random order —',
+      `<span class="k">gsap</span>.to(words, {\n  opacity: <span class="n">1</span>,\n  stagger: { each: <span class="n">0.06</span>, from: <span class="s">"random"</span> },\n  duration: <span class="n">0.4</span>\n});`
+    );
+  });
+
+  document.getElementById('stag-reset-btn').addEventListener('click', resetStagger);
+
+  // ─── Section 6a: charsClass++ ───────────────────────────────────────────
+  let classSplit = null;
+  let classTween = null;
+
+  const accentCycle = [
+    'var(--accent4)', // 1,5,9,13…
+    'var(--accent2)', // 2,6,10,14…
+    'var(--accent3)', // 3,7,11,15…
+    'var(--accent)',  // 4,8,12,16…
+  ];
+
+  document.getElementById('class-play-btn').addEventListener('click', () => {
+    if (classTween) classTween.kill();
+    if (classSplit) classSplit.revert();
+
+    classSplit = SplitText.create('#class-target', {
+      type: 'chars',
+      charsClass: 'char++'
+    });
+
+    // Apply colors via inline style matching the char index cycling pattern
+    classSplit.chars.forEach((el, i) => {
+      el.style.color = accentCycle[i % 4];
+      el.style.display = 'inline-block';
+    });
+
+    classTween = gsap.from(classSplit.chars, {
+      opacity: 0,
+      scale: 0.3,
+      rotation: -30,
+      stagger: 0.05,
+      duration: 0.5,
+      ease: 'back.out(2)'
+    });
+  });
+
+  document.getElementById('class-revert-btn').addEventListener('click', () => {
+    if (classTween) classTween.kill();
+    if (classSplit) { classSplit.revert(); classSplit = null; }
+    gsap.set('#class-target', { clearProps: 'all' });
+  });
+
+  // ─── Section 6b: propIndex ──────────────────────────────────────────────
+  let piSplit = null;
+  let piTween = null;
+
+  document.getElementById('pi-play-btn').addEventListener('click', () => {
+    if (piTween) piTween.kill();
+    if (piSplit) piSplit.revert();
+
+    piSplit = SplitText.create('#propindex-target', {
+      type: 'chars',
+      propIndex: true
+    });
+
+    // propIndex: true sets --char: N on each element
+    // Apply hsl color derived from the CSS variable via inline computation
+    piSplit.chars.forEach((el, i) => {
+      el.classList.add('char-pi');
+      const hue = (i * 22) % 360;
+      el.style.color = `hsl(${hue}deg, 90%, 70%)`;
+      el.style.display = 'inline-block';
+    });
+
+    piTween = gsap.from(piSplit.chars, {
+      opacity: 0,
+      y: 30,
+      stagger: 0.04,
+      duration: 0.5,
+      ease: 'power3.out'
+    });
+  });
+
+  document.getElementById('pi-revert-btn').addEventListener('click', () => {
+    if (piTween) piTween.kill();
+    if (piSplit) { piSplit.revert(); piSplit = null; }
+    gsap.set('#propindex-target', { clearProps: 'all' });
+  });
+</script>
+</body>
+</html>

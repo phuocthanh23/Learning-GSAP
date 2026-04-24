@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DrawSVG — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(0,229,192,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* SVG strokes */
+    .draw-svg-path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Segment slider */
+    .range-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+    .range-row label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .range-row input[type=range] { accent-color: var(--accent2); flex: 1; }
+    .range-val { font-family: var(--mono); font-size: 11px; color: var(--accent2); min-width: 40px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html" selected>DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html">MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#reveal">Reveal</a>
+  <a href="#segment">Segment</a>
+  <a href="#timeline">Timeline</a>
+  <a href="#handwriting">Handwriting</a>
+  <a href="#loop">Loop</a>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · DrawSVGPlugin · Demo</div>
+    <h1 id="hero-title">Draw<br/><span>SVG</span></h1>
+    <p id="hero-desc">Animate SVG strokes into existence by controlling stroke-dashoffset and stroke-dasharray — draw, erase, and sequence with pixel-perfect control.</p>
+  </div>
+
+  <!-- REVEAL -->
+  <section id="reveal">
+    <div class="section-label">01 — Basic Reveal</div>
+    <h2>Stroke Reveal</h2>
+    <p class="section-desc">Draw a complex decorative path from nothing to full stroke. <code>drawSVG: 0</code> means the stroke starts invisible; animating to <code>"100%"</code> reveals it entirely.</p>
+
+    <div class="demo-card">
+      <h3>// gsap.from("#path", &#123; drawSVG: 0 &#125;)</h3>
+      <p>A wave arrow drawn with a single path. The stroke is revealed from left to right.</p>
+
+      <div class="stage">
+        <svg viewBox="0 0 500 120" width="100%" height="120" xmlns="http://www.w3.org/2000/svg">
+          <!-- Wave + arrow decorative path -->
+          <path id="reveal-path" class="draw-svg-path"
+            d="M10,60 C40,20 70,100 100,60 C130,20 160,100 190,60 C220,20 250,100 280,60 C310,20 340,100 370,60 L430,60 M410,40 L430,60 L410,80"
+            stroke="#00e5c0" stroke-width="3" />
+        </svg>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="reveal-draw-btn">draw</button>
+        <button class="btn" id="reveal-erase-btn">erase</button>
+        <button class="btn" id="reveal-restart-btn">restart</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.from(<span class="s">"#reveal-path"</span>, {
+  drawSVG: <span class="n">0</span>,
+  duration: <span class="n">2</span>,
+  ease: <span class="s">"power2.inOut"</span>
+});
+
+<span class="k">// erase: animate to invisible
+gsap</span>.to(<span class="s">"#reveal-path"</span>, { drawSVG: <span class="n">0</span>, duration: <span class="n">1.5</span> });</div>
+    </div>
+  </section>
+
+  <!-- SEGMENT -->
+  <section id="segment">
+    <div class="section-label">02 — Segment Control</div>
+    <h2>Segment & Moving Dot</h2>
+    <p class="section-desc">The <code>drawSVG</code> value describes a <em>visible segment</em> of the stroke — e.g. <code>"20% 80%"</code> shows only the middle portion. Drag the slider to move the segment around the ring.</p>
+
+    <div class="demo-card">
+      <h3>// Progress ring + moving dot technique</h3>
+      <p>Left: slider controls visible segment position on a ring. Right: a short segment continuously orbits.</p>
+
+      <div class="stage" style="gap: 60px; flex-wrap: wrap;">
+        <!-- Progress ring -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6" />
+            <circle id="ring-bg" cx="60" cy="60" r="50" fill="none" stroke="rgba(120,80,255,0.15)" stroke-width="6" />
+            <circle id="ring-path" cx="60" cy="60" r="50"
+              fill="none" stroke="#7850ff" stroke-width="6"
+              stroke-linecap="round"
+              transform="rotate(-90 60 60)" />
+          </svg>
+          <span style="font-family: var(--mono); font-size: 10px; color: var(--muted);">progress ring</span>
+        </div>
+
+        <!-- Moving dot ring -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2" />
+            <circle id="dot-path" cx="60" cy="60" r="50"
+              fill="none" stroke="#ff5c8a" stroke-width="10"
+              stroke-linecap="round"
+              transform="rotate(-90 60 60)" />
+          </svg>
+          <span style="font-family: var(--mono); font-size: 10px; color: var(--muted);">moving dot</span>
+        </div>
+      </div>
+
+      <div class="range-row">
+        <label>ring progress</label>
+        <input type="range" id="ring-slider" min="0" max="100" value="0" />
+        <span class="range-val" id="ring-val">0%</span>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="dot-play-btn">animate dot</button>
+        <button class="btn" id="dot-stop-btn">stop</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">// Progress ring — slider sets visible %
+gsap</span>.to(<span class="s">"#ring-path"</span>, { drawSVG: pct + <span class="s">"%"</span>, duration: <span class="n">0.3</span> });
+
+<span class="k">// Moving dot — only 8% of stroke visible, looping
+gsap</span>.fromTo(<span class="s">"#dot-path"</span>,
+  { drawSVG: <span class="s">"0% 0%"</span> },
+  { drawSVG: <span class="s">"92% 100%"</span>, duration: <span class="n">1.5</span>, ease: <span class="s">"none"</span>, repeat: <span class="n">-1</span> }
+);</div>
+    </div>
+  </section>
+
+  <!-- TIMELINE SEQUENCE -->
+  <section id="timeline">
+    <div class="section-label">03 — Multi-path Sequence</div>
+    <h2>Timeline Draw</h2>
+    <p class="section-desc">A simple house SVG illustration composed of multiple paths. Each segment draws in sequence on a GSAP timeline with staggered timing.</p>
+
+    <div class="demo-card">
+      <h3>// Staggered multi-path sequence on a timeline</h3>
+      <p>Each structural element of the house draws in one by one — ground, walls, roof, door, window.</p>
+
+      <div class="stage">
+        <svg id="house-svg" viewBox="0 0 240 180" width="240" height="180" xmlns="http://www.w3.org/2000/svg">
+          <!-- Ground -->
+          <line id="h-ground" x1="20" y1="155" x2="220" y2="155" stroke="#00e5c0" stroke-width="3" fill="none" stroke-linecap="round" />
+          <!-- Left wall -->
+          <line id="h-wall-l" x1="50" y1="155" x2="50" y2="95" stroke="#7850ff" stroke-width="3" fill="none" stroke-linecap="round" />
+          <!-- Right wall -->
+          <line id="h-wall-r" x1="190" y1="95" x2="190" y2="155" stroke="#7850ff" stroke-width="3" fill="none" stroke-linecap="round" />
+          <!-- Roof left -->
+          <line id="h-roof-l" x1="50" y1="95" x2="120" y2="45" stroke="#ff5c8a" stroke-width="3" fill="none" stroke-linecap="round" />
+          <!-- Roof right -->
+          <line id="h-roof-r" x1="120" y1="45" x2="190" y2="95" stroke="#ff5c8a" stroke-width="3" fill="none" stroke-linecap="round" />
+          <!-- Ceiling line -->
+          <line id="h-ceiling" x1="50" y1="95" x2="190" y2="95" stroke="#7850ff" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="4 4" />
+          <!-- Door -->
+          <path id="h-door" d="M100,155 L100,120 Q120,112 140,120 L140,155" stroke="#ffb830" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+          <!-- Window left -->
+          <rect id="h-win" x="60" y="105" width="24" height="22" rx="2" stroke="#00e5c0" stroke-width="2" fill="none" />
+          <!-- Window cross -->
+          <path id="h-win-cross" d="M60,116 L84,116 M72,105 L72,127" stroke="#00e5c0" stroke-width="1.5" fill="none" stroke-linecap="round" />
+          <!-- Chimney -->
+          <path id="h-chimney" d="M150,90 L150,60 L168,60 L168,82" stroke="#ffb830" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="house-play-btn">draw house</button>
+        <button class="btn" id="house-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> tl = <span class="k">gsap</span>.timeline();
+tl.from(<span class="s">"#h-ground"</span>,  { drawSVG: <span class="n">0</span>, duration: <span class="n">0.4</span> })
+  .from(<span class="s">"#h-wall-l"</span>,   { drawSVG: <span class="n">0</span>, duration: <span class="n">0.35</span> }, <span class="s">"-=0.1"</span>)
+  .from(<span class="s">"#h-wall-r"</span>,   { drawSVG: <span class="n">0</span>, duration: <span class="n">0.35</span> }, <span class="s">"-=0.2"</span>)
+  .from(<span class="s">"#h-roof-l"</span>,   { drawSVG: <span class="n">0</span>, duration: <span class="n">0.35</span> }, <span class="s">"-=0.1"</span>)
+  .from(<span class="s">"#h-roof-r"</span>,   { drawSVG: <span class="n">0</span>, duration: <span class="n">0.35</span> }, <span class="s">"-=0.2"</span>)
+  .from(<span class="s">"#h-door"</span>,     { drawSVG: <span class="n">0</span>, duration: <span class="n">0.4</span> });</div>
+    </div>
+  </section>
+
+  <!-- HANDWRITING -->
+  <section id="handwriting">
+    <div class="section-label">04 — Handwriting Reveal</div>
+    <h2>Signature Draw</h2>
+    <p class="section-desc">A cursive-style SVG path simulating handwriting. Animating with <code>ease: "none"</code> keeps the drawing speed constant, matching how a pen actually moves.</p>
+
+    <div class="demo-card">
+      <h3>// ease: "none" for realistic pen drawing</h3>
+      <p>The signature path is revealed at a steady rate — no ease in or out — for an authentic feel.</p>
+
+      <div class="stage" style="min-height: 200px;">
+        <svg viewBox="0 0 500 140" width="100%" height="140" xmlns="http://www.w3.org/2000/svg">
+          <!-- Simulated handwriting: flowing cursive-style path spelling "GSAP" in strokes -->
+          <!-- G stroke -->
+          <path id="hw-g" class="draw-svg-path"
+            d="M60,55 C45,30 20,30 18,55 C16,80 30,95 50,90 C70,85 72,68 65,62 L50,62"
+            stroke="#ffb830" stroke-width="2.5" />
+          <!-- S stroke -->
+          <path id="hw-s" class="draw-svg-path"
+            d="M95,45 C85,35 72,40 75,52 C78,62 100,58 102,70 C104,82 90,90 80,82"
+            stroke="#ffb830" stroke-width="2.5" />
+          <!-- A stroke -->
+          <path id="hw-a" class="draw-svg-path"
+            d="M120,90 L140,38 L160,90 M127,68 L153,68"
+            stroke="#ffb830" stroke-width="2.5" />
+          <!-- P stroke -->
+          <path id="hw-p" class="draw-svg-path"
+            d="M180,90 L180,38 C180,38 200,34 205,50 C210,65 195,72 180,68"
+            stroke="#ffb830" stroke-width="2.5" />
+          <!-- underline flourish -->
+          <path id="hw-line" class="draw-svg-path"
+            d="M10,108 C80,95 200,120 360,100 C420,94 460,105 490,100"
+            stroke="#00e5c0" stroke-width="1.5" />
+        </svg>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="hw-play-btn">draw</button>
+        <button class="btn" id="hw-pause-btn">pause</button>
+        <button class="btn" id="hw-reset-btn">reset</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">const</span> tl = <span class="k">gsap</span>.timeline();
+tl.from(<span class="s">"#hw-g"</span>, { drawSVG: <span class="n">0</span>, duration: <span class="n">1.0</span>, ease: <span class="s">"none"</span> })
+  .from(<span class="s">"#hw-s"</span>, { drawSVG: <span class="n">0</span>, duration: <span class="n">0.8</span>, ease: <span class="s">"none"</span> }, <span class="s">"-=0.1"</span>)
+  .from(<span class="s">"#hw-a"</span>, { drawSVG: <span class="n">0</span>, duration: <span class="n">0.9</span>, ease: <span class="s">"none"</span> }, <span class="s">"-=0.1"</span>)
+  .from(<span class="s">"#hw-p"</span>, { drawSVG: <span class="n">0</span>, duration: <span class="n">0.9</span>, ease: <span class="s">"none"</span> }, <span class="s">"-=0.1"</span>)
+  .from(<span class="s">"#hw-line"</span>, { drawSVG: <span class="n">0</span>, duration: <span class="n">1.2</span>, ease: <span class="s">"power2.out"</span> }, <span class="s">"-=0.2"</span>);</div>
+    </div>
+  </section>
+
+  <!-- LOOP -->
+  <section id="loop">
+    <div class="section-label">05 — Draw &amp; Erase Loop</div>
+    <h2>Infinite Loop</h2>
+    <p class="section-desc">Continuous draw → erase → repeat using <code>yoyo: true, repeat: -1</code>. The stroke fills, holds, then retraces itself back to nothing.</p>
+
+    <div class="demo-card">
+      <h3>// yoyo: true, repeat: -1 for perpetual draw/erase</h3>
+      <p>A decorative star and circle constellation that endlessly draws and undraws itself.</p>
+
+      <div class="stage" style="gap: 40px; flex-wrap: wrap;">
+        <svg viewBox="0 0 200 200" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer circle -->
+          <circle id="loop-circle" cx="100" cy="100" r="85"
+            fill="none" stroke="#7850ff" stroke-width="2"
+            stroke-linecap="round" />
+          <!-- Inner star polygon (as path) -->
+          <path id="loop-star" class="draw-svg-path"
+            d="M100,25 L112,72 L160,72 L122,98 L136,145 L100,118 L64,145 L78,98 L40,72 L88,72 Z"
+            stroke="#00e5c0" stroke-width="2" />
+          <!-- Pentagon inside star -->
+          <path id="loop-penta" class="draw-svg-path"
+            d="M100,55 L122,82 L112,112 L88,112 L78,82 Z"
+            stroke="#ff5c8a" stroke-width="1.5" />
+          <!-- Center cross -->
+          <path id="loop-cross" class="draw-svg-path"
+            d="M100,80 L100,120 M80,100 L120,100"
+            stroke="#ffb830" stroke-width="1.5" />
+        </svg>
+      </div>
+
+      <div class="controls">
+        <button class="btn primary" id="loop-play-btn">start loop</button>
+        <button class="btn" id="loop-stop-btn">stop</button>
+      </div>
+
+      <div class="code-snippet"><span class="k">gsap</span>.fromTo(<span class="s">"#loop-circle"</span>,
+  { drawSVG: <span class="s">"0% 0%"</span> },
+  { drawSVG: <span class="s">"0% 100%"</span>, duration: <span class="n">2</span>, ease: <span class="s">"power1.inOut"</span>,
+    yoyo: <span class="n">true</span>, repeat: <span class="n">-1</span>, repeatDelay: <span class="n">0.4</span> }
+);
+
+<span class="k">gsap</span>.fromTo(<span class="s">"#loop-star"</span>,
+  { drawSVG: <span class="s">"0% 0%"</span> },
+  { drawSVG: <span class="s">"0% 100%"</span>, duration: <span class="n">2</span>, ease: <span class="s">"power2.inOut"</span>,
+    yoyo: <span class="n">true</span>, repeat: <span class="n">-1</span>, delay: <span class="n">0.3</span> }
+);</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>GSAP 3.15 · DrawSVGPlugin Demo · Curtis Nguyen</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/DrawSVGPlugin.min.js"></script>
+<script>
+  gsap.registerPlugin(DrawSVGPlugin);
+
+  // ─── Hero ───────────────────────────────────────────────────────────────
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  // ─── Section 1: Reveal ──────────────────────────────────────────────────
+  // Start hidden
+  gsap.set('#reveal-path', { drawSVG: 0 });
+
+  let revealTween = null;
+  document.getElementById('reveal-draw-btn').addEventListener('click', () => {
+    if (revealTween) revealTween.kill();
+    gsap.set('#reveal-path', { drawSVG: 0 });
+    revealTween = gsap.to('#reveal-path', { drawSVG: '100%', duration: 2, ease: 'power2.inOut' });
+  });
+  document.getElementById('reveal-erase-btn').addEventListener('click', () => {
+    if (revealTween) revealTween.kill();
+    revealTween = gsap.to('#reveal-path', { drawSVG: 0, duration: 1.5, ease: 'power2.in' });
+  });
+  document.getElementById('reveal-restart-btn').addEventListener('click', () => {
+    if (revealTween) revealTween.kill();
+    gsap.set('#reveal-path', { drawSVG: 0 });
+    revealTween = gsap.to('#reveal-path', { drawSVG: '100%', duration: 2, ease: 'power2.inOut' });
+  });
+
+  // ─── Section 2: Segment ─────────────────────────────────────────────────
+  // Init ring at 0
+  gsap.set('#ring-path', { drawSVG: '0% 0%' });
+  gsap.set('#dot-path',  { drawSVG: '0% 0%' });
+
+  const ringSlider = document.getElementById('ring-slider');
+  const ringVal    = document.getElementById('ring-val');
+
+  ringSlider.addEventListener('input', () => {
+    const pct = parseInt(ringSlider.value);
+    ringVal.textContent = pct + '%';
+    gsap.to('#ring-path', { drawSVG: pct + '%', duration: 0.25, ease: 'none' });
+  });
+
+  let dotTween = null;
+  document.getElementById('dot-play-btn').addEventListener('click', () => {
+    if (dotTween) dotTween.kill();
+    gsap.set('#dot-path', { drawSVG: '0% 0%' });
+    dotTween = gsap.fromTo('#dot-path',
+      { drawSVG: '0% 8%' },
+      { drawSVG: '92% 100%', duration: 1.8, ease: 'none', repeat: -1 }
+    );
+  });
+  document.getElementById('dot-stop-btn').addEventListener('click', () => {
+    if (dotTween) dotTween.kill();
+    gsap.set('#dot-path', { drawSVG: '0% 0%' });
+  });
+
+  // ─── Section 3: House Timeline ──────────────────────────────────────────
+  const houseIds = ['#h-ground','#h-wall-l','#h-wall-r','#h-roof-l','#h-roof-r','#h-ceiling','#h-door','#h-win','#h-win-cross','#h-chimney'];
+  gsap.set(houseIds, { drawSVG: 0 });
+
+  let houseTl = null;
+  document.getElementById('house-play-btn').addEventListener('click', () => {
+    if (houseTl) houseTl.kill();
+    gsap.set(houseIds, { drawSVG: 0 });
+    houseTl = gsap.timeline()
+      .to('#h-ground',   { drawSVG: '100%', duration: 0.5, ease: 'power2.out' })
+      .to('#h-wall-l',   { drawSVG: '100%', duration: 0.4, ease: 'power2.out' }, '-=0.1')
+      .to('#h-wall-r',   { drawSVG: '100%', duration: 0.4, ease: 'power2.out' }, '-=0.3')
+      .to('#h-roof-l',   { drawSVG: '100%', duration: 0.4, ease: 'power2.out' })
+      .to('#h-roof-r',   { drawSVG: '100%', duration: 0.4, ease: 'power2.out' }, '-=0.2')
+      .to('#h-ceiling',  { drawSVG: '100%', duration: 0.35, ease: 'none' })
+      .to('#h-chimney',  { drawSVG: '100%', duration: 0.4, ease: 'power2.out' })
+      .to('#h-door',     { drawSVG: '100%', duration: 0.5, ease: 'power2.out' })
+      .to('#h-win',      { drawSVG: '100%', duration: 0.35, ease: 'power2.out' })
+      .to('#h-win-cross',{ drawSVG: '100%', duration: 0.25, ease: 'none' });
+  });
+  document.getElementById('house-reset-btn').addEventListener('click', () => {
+    if (houseTl) houseTl.kill();
+    gsap.set(houseIds, { drawSVG: 0 });
+  });
+
+  // ─── Section 4: Handwriting ─────────────────────────────────────────────
+  const hwIds = ['#hw-g','#hw-s','#hw-a','#hw-p','#hw-line'];
+  gsap.set(hwIds, { drawSVG: 0 });
+
+  let hwTl = null;
+  document.getElementById('hw-play-btn').addEventListener('click', () => {
+    if (hwTl) { hwTl.play(); return; }
+    hwTl = gsap.timeline()
+      .to('#hw-g',    { drawSVG: '100%', duration: 1.0, ease: 'none' })
+      .to('#hw-s',    { drawSVG: '100%', duration: 0.8, ease: 'none' }, '-=0.1')
+      .to('#hw-a',    { drawSVG: '100%', duration: 0.9, ease: 'none' }, '-=0.1')
+      .to('#hw-p',    { drawSVG: '100%', duration: 0.9, ease: 'none' }, '-=0.1')
+      .to('#hw-line', { drawSVG: '100%', duration: 1.2, ease: 'power2.out' }, '-=0.2');
+  });
+  document.getElementById('hw-pause-btn').addEventListener('click', () => {
+    if (hwTl) hwTl.paused(!hwTl.paused());
+  });
+  document.getElementById('hw-reset-btn').addEventListener('click', () => {
+    if (hwTl) { hwTl.kill(); hwTl = null; }
+    gsap.set(hwIds, { drawSVG: 0 });
+  });
+
+  // ─── Section 5: Loop ────────────────────────────────────────────────────
+  gsap.set(['#loop-circle','#loop-star','#loop-penta','#loop-cross'], { drawSVG: 0 });
+
+  let loopTweens = [];
+  document.getElementById('loop-play-btn').addEventListener('click', () => {
+    if (loopTweens.length) return; // already running
+    loopTweens.push(
+      gsap.fromTo('#loop-circle',
+        { drawSVG: '0% 0%' },
+        { drawSVG: '0% 100%', duration: 2, ease: 'power1.inOut', yoyo: true, repeat: -1, repeatDelay: 0.3 }
+      ),
+      gsap.fromTo('#loop-star',
+        { drawSVG: '0% 0%' },
+        { drawSVG: '0% 100%', duration: 2, ease: 'power2.inOut', yoyo: true, repeat: -1, delay: 0.3 }
+      ),
+      gsap.fromTo('#loop-penta',
+        { drawSVG: '0% 0%' },
+        { drawSVG: '0% 100%', duration: 1.5, ease: 'power2.inOut', yoyo: true, repeat: -1, delay: 0.6 }
+      ),
+      gsap.fromTo('#loop-cross',
+        { drawSVG: '0% 0%' },
+        { drawSVG: '0% 100%', duration: 1, ease: 'power1.inOut', yoyo: true, repeat: -1, delay: 0.9 }
+      )
+    );
+  });
+  document.getElementById('loop-stop-btn').addEventListener('click', () => {
+    loopTweens.forEach(t => t.kill());
+    loopTweens = [];
+    gsap.set(['#loop-circle','#loop-star','#loop-penta','#loop-cross'], { drawSVG: 0 });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MorphSVG — GSAP Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.08); --border-accent: rgba(120,80,255,0.4);
+      --text: #f0f0f8; --muted: rgba(240,240,248,0.45);
+      --accent: #7850ff; --accent2: #00e5c0; --accent3: #ff5c8a; --accent4: #ffb830;
+      --mono: 'Space Mono', monospace; --sans: 'DM Sans', sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; overflow-x: hidden; }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(10,10,15,0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 52px; overflow-x: auto; }
+    nav a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; padding: 0 14px; height: 52px; display: flex; align-items: center; white-space: nowrap; border-right: 1px solid var(--border); transition: color 0.2s, background 0.2s; }
+    nav a:first-of-type { border-left: 1px solid var(--border); }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .demo-switcher {
+      font-family: var(--mono); font-size: 11px;
+      background: rgba(120,80,255,0.12); color: var(--text);
+      border: 1px solid var(--border-accent); border-radius: 6px;
+      padding: 0 28px 0 10px; height: 32px; margin-right: 12px;
+      flex-shrink: 0; cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(120%2C80%2C255%2C0.8)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .demo-switcher:hover { border-color: var(--accent); background-color: rgba(120,80,255,0.2); }
+    .demo-switcher option { background: #0a0a0f; color: #f0f0f8; }
+    main { padding-top: 52px; }
+    section { padding: 5rem 2rem; max-width: 900px; margin: 0 auto; border-top: 1px solid var(--border); }
+    .section-label { font-family: var(--mono); font-size: 10px; color: var(--accent4); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -1px; }
+    .section-desc { color: var(--muted); font-size: 14px; margin-bottom: 2.5rem; max-width: 560px; }
+    .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; transition: border-color 0.2s; }
+    .demo-card:hover { border-color: var(--border-accent); }
+    .demo-card h3 { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 0.5rem; }
+    .demo-card p { font-size: 13px; color: var(--muted); margin-bottom: 1.25rem; }
+    .stage { background: var(--surface2); border-radius: 12px; padding: 1rem; min-height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; overflow: hidden; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { font-family: var(--mono); font-size: 11px; background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { border-color: var(--accent4); color: var(--text); background: rgba(255,184,48,0.08); }
+    .btn.primary { border-color: var(--accent4); color: var(--accent4); }
+    .code-snippet { font-family: var(--mono); font-size: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--muted); white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+    .code-snippet .k { color: var(--accent); }
+    .code-snippet .s { color: var(--accent2); }
+    .code-snippet .n { color: var(--accent4); }
+    footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* Hero */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 2rem; position: relative; overflow: hidden; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(120,80,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(120,80,255,0.05) 1px, transparent 1px); background-size: 48px 48px; }
+    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(120,80,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+    #hero .tag { font-family: var(--mono); font-size: 11px; color: var(--accent4); border: 1px solid rgba(255,184,48,0.3); padding: 4px 14px; border-radius: 999px; margin-bottom: 2rem; display: inline-block; }
+    #hero h1 { font-family: var(--mono); font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; line-height: 1; letter-spacing: -2px; margin-bottom: 1.5rem; }
+    #hero h1 span { color: var(--accent4); }
+    #hero p { font-size: 16px; color: var(--muted); max-width: 540px; margin-bottom: 2rem; }
+
+    /* Demo-specific */
+    svg.morph-svg { width: 100%; height: 180px; display: block; }
+    .icons-row { display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .icon-demo { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .icon-demo span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .compare-row { display: flex; gap: 1rem; width: 100%; }
+    .compare-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .compare-col .label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .hidden-shapes { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .wiggle-count-row { display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap; }
+    .wiggle-box-col { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .wiggle-box-col .label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- Hidden SVG shapes for morphing -->
+<svg class="hidden-shapes" aria-hidden="true">
+  <!-- Blob shapes for loop demo -->
+  <path id="blob1" d="M100,30 C130,20 160,50 165,80 C170,110 155,145 130,158 C105,171 70,165 50,148 C30,131 25,100 35,72 C45,44 70,40 100,30 Z"/>
+  <path id="blob2" d="M100,25 C135,15 168,45 170,85 C172,125 148,158 115,165 C82,172 48,155 35,125 C22,95 35,58 58,40 C81,22 65,35 100,25 Z"/>
+  <path id="blob3" d="M100,35 C125,18 155,35 168,65 C181,95 170,135 148,155 C126,175 88,175 65,158 C42,141 28,108 32,78 C36,48 75,52 100,35 Z"/>
+  <path id="blob4" d="M100,20 C140,18 172,55 168,95 C164,135 138,165 105,170 C72,175 42,152 30,118 C18,84 28,48 55,32 C82,16 60,22 100,20 Z"/>
+</svg>
+
+<nav>
+  <select class="demo-switcher" onchange="location.href=this.value" title="Switch demo">
+    <option value="gsap-demo.html">Core</option>
+    <option value="scrolltrigger-demo.html">ScrollTrigger</option>
+    <option value="scrollsmoother-demo.html">ScrollSmoother</option>
+    <option value="motionpath-demo.html">MotionPath</option>
+    <option value="textplugin-demo.html">TextPlugin</option>
+    <option value="flip-demo.html">Flip</option>
+    <option value="observer-demo.html">Observer</option>
+    <option value="draggable-demo.html">Draggable</option>
+    <option value="customease-demo.html">CustomEase</option>
+    <option value="easepack-demo.html">EasePack</option>
+    <option value="drawsvg-demo.html">DrawSVG</option>
+    <option value="splittext-demo.html">SplitText</option>
+    <option value="morphsvg-demo.html" selected>MorphSVG</option>
+    <option value="pixi-demo.html">PixiPlugin</option>
+    <option value="customwiggle-demo.html">CustomWiggle</option>
+    <option value="custombounce-demo.html">CustomBounce</option>
+    <option value="cssrule-demo.html">CSSRulePlugin</option>
+    <option value="scrambletext-demo.html">ScrambleText</option>
+    <option value="inertia-demo.html">InertiaPlugin</option>
+  </select>
+  <a href="#basic">Shape Morph</a>
+  <a href="#icons">Icon Morph</a>
+  <a href="#shapeindex">shapeIndex</a>
+  <a href="#type">Linear vs Rotational</a>
+  <a href="#loop">Morph Loop</a>
+</nav>
+
+<main>
+  <div id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="tag" id="hero-tag">GSAP 3.15 · MorphSVGPlugin · Demo</div>
+    <h1 id="hero-title">Morph<br/><span>SVG</span></h1>
+    <p id="hero-desc">Seamlessly morph SVG paths, polygons, and shapes with GSAP's MorphSVGPlugin. Animate the <code>d</code> attribute with zero hassle.</p>
+  </div>
+
+  <!-- Section 1: Basic shape morph -->
+  <section id="basic">
+    <div class="section-label">01 — Basic</div>
+    <h2>Shape to Shape</h2>
+    <p class="section-desc">MorphSVGPlugin converts primitives to paths automatically, then animates between them. Here a circle morphs into a 5-point star.</p>
+    <div class="demo-card">
+      <h3>circle → star → circle</h3>
+      <p>Both shapes are converted to paths via <code>MorphSVGPlugin.convertToPath()</code>, then morphed with <code>morphSVG</code>.</p>
+      <div class="stage">
+        <svg class="morph-svg" viewBox="0 0 200 200">
+          <!-- Hidden star target -->
+          <path id="starTarget" d="M100,20 L112,72 L165,72 L122,104 L138,158 L100,128 L62,158 L78,104 L35,72 L88,72 Z" fill="none" stroke="none" visibility="hidden"/>
+          <!-- Visible morphing path (starts as circle shape) -->
+          <path id="basicMorphShape"
+            d="M180,100 C180,143.08 143.08,180 100,180 C56.92,180 20,143.08 20,100 C20,56.92 56.92,20 100,20 C143.08,20 180,56.92 180,100 Z"
+            fill="rgba(120,80,255,0.25)" stroke="#7850ff" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="morphToStar()">to star</button>
+        <button class="btn" onclick="morphToCircle()">to circle</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#shape"</span>, {
+  <span class="n">morphSVG</span>: <span class="s">"#starTarget"</span>,
+  duration: <span class="n">1</span>,
+  ease: <span class="s">"power2.inOut"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 2: Icon morphs -->
+  <section id="icons">
+    <div class="section-label">02 — Icons</div>
+    <h2>Icon Morphs</h2>
+    <p class="section-desc">Morph between UI icons for smooth, expressive state transitions. Play/Pause and Hamburger/Close are classic use cases.</p>
+
+    <div class="demo-card">
+      <h3>play ▶ → pause ⏸</h3>
+      <p>Morph a play triangle path into two pause bars using <code>morphSVG: { shape: "#pausePath" }</code>.</p>
+      <div class="stage">
+        <svg id="playPauseSvg" viewBox="0 0 200 200" style="width:200px;height:200px;display:block;">
+          <!-- Hidden pause target -->
+          <path id="pausePath" d="M70,55 L70,145 L95,145 L95,55 Z M105,55 L105,145 L130,145 L130,55 Z" fill="none" visibility="hidden"/>
+          <!-- Play path (triangle) -->
+          <path id="playPath" d="M65,45 L65,155 L150,100 Z" fill="rgba(0,229,192,0.3)" stroke="#00e5c0" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="toPlay()">play</button>
+        <button class="btn" onclick="toPause()">pause</button>
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h3>hamburger ☰ → close ✕</h3>
+      <p>Three line paths morph: top line rotates to one diagonal, bottom rotates to the other, middle fades out.</p>
+      <div class="stage">
+        <svg id="menuSvg" viewBox="0 0 200 200" style="width:200px;height:200px;display:block;">
+          <path id="menuLine1" d="M50,75 L150,75" stroke="#ffb830" stroke-width="8" stroke-linecap="round" fill="none"/>
+          <path id="menuLine2" d="M50,100 L150,100" stroke="#ffb830" stroke-width="8" stroke-linecap="round" fill="none"/>
+          <path id="menuLine3" d="M50,125 L150,125" stroke="#ffb830" stroke-width="8" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="toHamburger()">hamburger</button>
+        <button class="btn" onclick="toClose()">close ✕</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: shapeIndex -->
+  <section id="shapeindex">
+    <div class="section-label">03 — shapeIndex</div>
+    <h2>shapeIndex Control</h2>
+    <p class="section-desc"><code>shapeIndex</code> controls where the morph starts on the target path. A bad index causes twisting; a good index gives a clean morph.</p>
+    <div class="demo-card">
+      <h3>default vs optimized shapeIndex</h3>
+      <p>Left: <code>shapeIndex: 0</code> (default — may twist). Right: <code>shapeIndex: 4</code> (optimized — clean path). Watch the difference in rotation.</p>
+      <div class="stage">
+        <div class="compare-row">
+          <div class="compare-col">
+            <svg viewBox="0 0 200 200" style="width:100%;height:160px;display:block;">
+              <path id="siStar1" d="M100,30 L112,72 L155,72 L122,97 L134,140 L100,115 L66,140 L78,97 L45,72 L88,72 Z"
+                fill="rgba(255,92,138,0.25)" stroke="#ff5c8a" stroke-width="2"/>
+              <path id="siStar2Target" d="M100,20 L116,65 L165,65 L126,93 L141,138 L100,110 L59,138 L74,93 L35,65 L84,65 Z" fill="none" visibility="hidden"/>
+            </svg>
+            <span class="label">shapeIndex: 0 (default)</span>
+          </div>
+          <div class="compare-col">
+            <svg viewBox="0 0 200 200" style="width:100%;height:160px;display:block;">
+              <path id="siStar3" d="M100,30 L112,72 L155,72 L122,97 L134,140 L100,115 L66,140 L78,97 L45,72 L88,72 Z"
+                fill="rgba(120,80,255,0.25)" stroke="#7850ff" stroke-width="2"/>
+              <path id="siStar4Target" d="M100,20 L116,65 L165,65 L126,93 L141,138 L100,110 L59,138 L74,93 L35,65 L84,65 Z" fill="none" visibility="hidden"/>
+            </svg>
+            <span class="label">shapeIndex: 4 (optimized)</span>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="runShapeIndex()">run comparison</button>
+        <button class="btn" onclick="resetShapeIndex()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#shape"</span>, {
+  <span class="n">morphSVG</span>: { shape: <span class="s">"#target"</span>, shapeIndex: <span class="n">4</span> },
+  duration: <span class="n">1.5</span>, ease: <span class="s">"power2.inOut"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 4: type — rotational vs linear -->
+  <section id="type">
+    <div class="section-label">04 — Type</div>
+    <h2>Linear vs Rotational</h2>
+    <p class="section-desc"><code>type: "linear"</code> interpolates points directly. <code>type: "rotational"</code> decomposes each point's angle and magnitude for smoother organic morphs.</p>
+    <div class="demo-card">
+      <h3>same morph, different type</h3>
+      <p>Both morph from the same blob to a star simultaneously. Notice how rotational feels more fluid and organic.</p>
+      <div class="stage">
+        <div class="compare-row">
+          <div class="compare-col">
+            <svg viewBox="0 0 200 200" style="width:100%;height:160px;display:block;">
+              <path id="linearBlob"
+                d="M100,35 C130,25 160,55 165,90 C170,125 150,158 120,165 C90,172 55,158 38,128 C21,98 30,58 55,40 C80,22 70,45 100,35 Z"
+                fill="rgba(0,229,192,0.2)" stroke="#00e5c0" stroke-width="2"/>
+              <path id="linearStarTarget"
+                d="M100,20 L112,72 L165,72 L122,104 L138,158 L100,128 L62,158 L78,104 L35,72 L88,72 Z"
+                fill="none" visibility="hidden"/>
+            </svg>
+            <span class="label">type: "linear"</span>
+          </div>
+          <div class="compare-col">
+            <svg viewBox="0 0 200 200" style="width:100%;height:160px;display:block;">
+              <path id="rotBlob"
+                d="M100,35 C130,25 160,55 165,90 C170,125 150,158 120,165 C90,172 55,158 38,128 C21,98 30,58 55,40 C80,22 70,45 100,35 Z"
+                fill="rgba(255,92,138,0.2)" stroke="#ff5c8a" stroke-width="2"/>
+              <path id="rotStarTarget"
+                d="M100,20 L112,72 L165,72 L122,104 L138,158 L100,128 L62,158 L78,104 L35,72 L88,72 Z"
+                fill="none" visibility="hidden"/>
+            </svg>
+            <span class="label">type: "rotational"</span>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" onclick="runTypeComparison()">run both</button>
+        <button class="btn" onclick="resetTypeComparison()">reset</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">to</span>(<span class="s">"#blob"</span>, {
+  <span class="n">morphSVG</span>: { shape: <span class="s">"#star"</span>, type: <span class="s">"rotational"</span> },
+  duration: <span class="n">1.5</span>, ease: <span class="s">"power2.inOut"</span>
+});</div>
+    </div>
+  </section>
+
+  <!-- Section 5: Continuous morph loop -->
+  <section id="loop">
+    <div class="section-label">05 — Loop</div>
+    <h2>Continuous Morph Loop</h2>
+    <p class="section-desc">Chain multiple morphs in a GSAP timeline with <code>repeat: -1</code> for an infinite organic animation loop through 4 blob shapes.</p>
+    <div class="demo-card">
+      <h3>blob1 → blob2 → blob3 → blob4 → blob1</h3>
+      <p>A timeline morphs through four distinct blobs endlessly. Each step uses <code>ease: "sine.inOut"</code> for organic motion.</p>
+      <div class="stage">
+        <svg id="loopSvg" viewBox="0 0 200 200" style="width:220px;height:220px;display:block;">
+          <path id="loopShape"
+            d="M100,30 C130,20 160,50 165,80 C170,110 155,145 130,158 C105,171 70,165 50,148 C30,131 25,100 35,72 C45,44 70,40 100,30 Z"
+            fill="rgba(120,80,255,0.3)" stroke="#7850ff" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="loopPlayBtn" onclick="toggleLoop()">pause</button>
+        <button class="btn" onclick="restartLoop()">restart</button>
+      </div>
+      <div class="code-snippet"><span class="k">gsap</span>.<span class="n">timeline</span>({ repeat: <span class="n">-1</span>, yoyo: <span class="n">false</span> })
+  .<span class="n">to</span>(<span class="s">"#shape"</span>, { <span class="n">morphSVG</span>: <span class="s">"#blob2"</span>, duration: <span class="n">1.5</span>, ease: <span class="s">"sine.inOut"</span> })
+  .<span class="n">to</span>(<span class="s">"#shape"</span>, { <span class="n">morphSVG</span>: <span class="s">"#blob3"</span>, duration: <span class="n">1.5</span>, ease: <span class="s">"sine.inOut"</span> })
+  .<span class="n">to</span>(<span class="s">"#shape"</span>, { <span class="n">morphSVG</span>: <span class="s">"#blob4"</span>, duration: <span class="n">1.5</span>, ease: <span class="s">"sine.inOut"</span> })
+  .<span class="n">to</span>(<span class="s">"#shape"</span>, { <span class="n">morphSVG</span>: <span class="s">"#blob1"</span>, duration: <span class="n">1.5</span>, ease: <span class="s">"sine.inOut"</span> });</div>
+    </div>
+  </section>
+</main>
+
+<footer>GSAP 3.15 · MorphSVGPlugin · Standalone Demo · No build tools</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/MorphSVGPlugin.min.js"></script>
+<script>
+  gsap.registerPlugin(MorphSVGPlugin);
+
+  // Hero animation
+  gsap.set(['#hero-tag','#hero-title','#hero p'], { opacity: 0, y: 20 });
+  gsap.timeline({ delay: 0.3 })
+    .to('#hero-tag',   { opacity:1, y:0, duration:0.6, ease:'power2.out' })
+    .to('#hero-title', { opacity:1, y:0, duration:0.8, ease:'power3.out' }, '-=0.3')
+    .to('#hero p',     { opacity:1, y:0, duration:0.6, ease:'power2.out' }, '-=0.4');
+
+  // --- Section 1: Basic morph ---
+  var circleD = "M180,100 C180,143.08 143.08,180 100,180 C56.92,180 20,143.08 20,100 C20,56.92 56.92,20 100,20 C143.08,20 180,56.92 180,100 Z";
+  var starD = "M100,20 L112,72 L165,72 L122,104 L138,158 L100,128 L62,158 L78,104 L35,72 L88,72 Z";
+  var basicState = 'circle';
+
+  function morphToStar() {
+    basicState = 'star';
+    gsap.to('#basicMorphShape', {
+      morphSVG: '#starTarget',
+      duration: 1,
+      ease: 'power2.inOut',
+      fill: 'rgba(255,184,48,0.25)',
+      stroke: '#ffb830'
+    });
+  }
+
+  function morphToCircle() {
+    basicState = 'circle';
+    gsap.to('#basicMorphShape', {
+      morphSVG: circleD,
+      duration: 1,
+      ease: 'power2.inOut',
+      fill: 'rgba(120,80,255,0.25)',
+      stroke: '#7850ff'
+    });
+  }
+
+  // --- Section 2: Icon morphs ---
+  var playD = "M65,45 L65,155 L150,100 Z";
+  var pauseD = "M70,55 L70,145 L95,145 L95,55 Z M105,55 L105,145 L130,145 L130,55 Z";
+  var isPlaying = true;
+
+  function toPlay() {
+    isPlaying = true;
+    gsap.to('#playPath', { morphSVG: playD, duration: 0.6, ease: 'back.out(1.4)', fill: 'rgba(0,229,192,0.3)', stroke: '#00e5c0' });
+  }
+
+  function toPause() {
+    isPlaying = false;
+    gsap.to('#playPath', { morphSVG: pauseD, duration: 0.6, ease: 'back.out(1.4)', fill: 'rgba(255,92,138,0.3)', stroke: '#ff5c8a' });
+  }
+
+  var menuOpen = false;
+  function toHamburger() {
+    menuOpen = false;
+    var tl = gsap.timeline();
+    tl.to('#menuLine1', { morphSVG: "M50,75 L150,75", duration: 0.4, ease: 'power2.inOut' }, 0)
+      .to('#menuLine2', { morphSVG: "M50,100 L150,100", opacity: 1, duration: 0.3, ease: 'power2.inOut' }, 0)
+      .to('#menuLine3', { morphSVG: "M50,125 L150,125", duration: 0.4, ease: 'power2.inOut' }, 0);
+  }
+
+  function toClose() {
+    menuOpen = true;
+    var tl = gsap.timeline();
+    tl.to('#menuLine2', { opacity: 0, duration: 0.2 }, 0)
+      .to('#menuLine1', { morphSVG: "M60,60 L140,140", duration: 0.5, ease: 'power2.inOut' }, 0.1)
+      .to('#menuLine3', { morphSVG: "M140,60 L60,140", duration: 0.5, ease: 'power2.inOut' }, 0.1);
+  }
+
+  // --- Section 3: shapeIndex ---
+  var si1D = "M100,30 L112,72 L155,72 L122,97 L134,140 L100,115 L66,140 L78,97 L45,72 L88,72 Z";
+  var si3D = "M100,30 L112,72 L155,72 L122,97 L134,140 L100,115 L66,140 L78,97 L45,72 L88,72 Z";
+
+  function runShapeIndex() {
+    gsap.to('#siStar1', {
+      morphSVG: { shape: '#siStar2Target', shapeIndex: 0 },
+      duration: 1.8, ease: 'power2.inOut',
+      fill: 'rgba(255,92,138,0.4)', stroke: '#ff5c8a'
+    });
+    gsap.to('#siStar3', {
+      morphSVG: { shape: '#siStar4Target', shapeIndex: 4 },
+      duration: 1.8, ease: 'power2.inOut',
+      fill: 'rgba(120,80,255,0.4)', stroke: '#7850ff'
+    });
+  }
+
+  function resetShapeIndex() {
+    gsap.to('#siStar1', { morphSVG: si1D, duration: 0.8, ease: 'power2.inOut', fill: 'rgba(255,92,138,0.25)', stroke: '#ff5c8a' });
+    gsap.to('#siStar3', { morphSVG: si3D, duration: 0.8, ease: 'power2.inOut', fill: 'rgba(120,80,255,0.25)', stroke: '#7850ff' });
+  }
+
+  // --- Section 4: type comparison ---
+  var blobD = "M100,35 C130,25 160,55 165,90 C170,125 150,158 120,165 C90,172 55,158 38,128 C21,98 30,58 55,40 C80,22 70,45 100,35 Z";
+
+  function runTypeComparison() {
+    gsap.to('#linearBlob', {
+      morphSVG: { shape: '#linearStarTarget', type: 'linear' },
+      duration: 1.5, ease: 'power2.inOut'
+    });
+    gsap.to('#rotBlob', {
+      morphSVG: { shape: '#rotStarTarget', type: 'rotational' },
+      duration: 1.5, ease: 'power2.inOut'
+    });
+  }
+
+  function resetTypeComparison() {
+    gsap.to('#linearBlob', { morphSVG: blobD, duration: 0.8, ease: 'power2.inOut' });
+    gsap.to('#rotBlob', { morphSVG: blobD, duration: 0.8, ease: 'power2.inOut' });
+  }
+
+  // --- Section 5: Loop ---
+  var loopTl = gsap.timeline({ repeat: -1 });
+  loopTl
+    .to('#loopShape', { morphSVG: '#blob2', duration: 1.5, ease: 'sine.inOut', fill: 'rgba(0,229,192,0.3)', stroke: '#00e5c0' })
+    .to('#loopShape', { morphSVG: '#blob3', duration: 1.5, ease: 'sine.inOut', fill: 'rgba(255,92,138,0.3)', stroke: '#ff5c8a' })
+    .to('#loopShape', { morphSVG: '#blob4', duration: 1.5, ease: 'sine.inOut', fill: 'rgba(255,184,48,0.3)', stroke: '#ffb830' })
+    .to('#loopShape', { morphSVG: '#blob1', duration: 1.5, ease: 'sine.inOut', fill: 'rgba(120,80,255,0.3)', stroke: '#7850ff' });
+
+  function toggleLoop() {
+    var btn = document.getElementById('loopPlayBtn');
+    if (loopTl.paused()) {
+      loopTl.resume();
+      btn.textContent = 'pause';
+    } else {
+      loopTl.pause();
+      btn.textContent = 'play';
+    }
+  }
+
+  function restartLoop() {
+    loopTl.restart();
+    document.getElementById('loopPlayBtn').textContent = 'pause';
+  }
+</script>
+</body>
+</html>
